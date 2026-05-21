@@ -3,15 +3,31 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { loadEntries, type Entry } from "@/lib/entries";
 import { WashiTape } from "@/components/WashiTape";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { StarDoodle, HeartDoodle, SparkleDoodle, UnderlineSquiggle, ArrowSquiggle } from "@/components/Doodles";
-import { ChevronLeft, ChevronRight, MapPin, FolderHeart, Calendar as CalendarIcon } from "lucide-react";
+import {
+  StarDoodle,
+  HeartDoodle,
+  SparkleDoodle,
+  UnderlineSquiggle,
+  ArrowSquiggle,
+} from "@/components/Doodles";
+import {
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+  FolderHeart,
+  Calendar as CalendarIcon,
+  Download,
+} from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_app/collections")({
   head: () => ({
     meta: [
       { title: "Collections — MomentStash" },
-      { name: "description", content: "Shelves of folded days, grouped your way." },
+      {
+        name: "description",
+        content: "Shelves of folded days, grouped your way.",
+      },
     ],
   }),
   component: CollectionsPage,
@@ -21,46 +37,251 @@ const tapeFor = ["pink", "mint", "lavender", "yellow"] as const;
 
 function PlantDoodle1() {
   return (
-    <svg className="w-[60px] h-[80px]" viewBox="0 0 60 80" fill="none" stroke="var(--color-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M15 55 L45 55 L42 75 L18 75 Z" fill="var(--color-paper-deep)" stroke="var(--color-ink)" strokeWidth="1.5" />
-      <ellipse cx="30" cy="55" rx="15" ry="3" fill="var(--color-paper)" stroke="var(--color-ink)" strokeWidth="1.5" />
-      <path d="M30 55 Q20 40 15 30" fill="none" stroke="oklch(0.7 0.08 140)" strokeWidth="1.5" />
-      <path d="M30 55 Q40 35 45 25" fill="none" stroke="oklch(0.7 0.08 140)" strokeWidth="1.5" />
-      <path d="M30 55 Q30 30 30 20" fill="none" stroke="oklch(0.7 0.08 140)" strokeWidth="1.5" />
-      <ellipse cx="15" cy="30" rx="6" ry="10" fill="oklch(0.85 0.06 145)" stroke="oklch(0.7 0.08 140)" strokeWidth="1" transform="rotate(-20 15 30)" />
-      <ellipse cx="45" cy="25" rx="6" ry="10" fill="oklch(0.85 0.06 145)" stroke="oklch(0.7 0.08 140)" strokeWidth="1" transform="rotate(20 45 25)" />
-      <ellipse cx="30" cy="20" rx="5" ry="9" fill="oklch(0.85 0.06 145)" stroke="oklch(0.7 0.08 140)" strokeWidth="1" />
+    <svg
+      className="w-[60px] h-[80px]"
+      viewBox="0 0 60 80"
+      fill="none"
+      stroke="var(--color-ink)"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path
+        d="M15 55 L45 55 L42 75 L18 75 Z"
+        fill="var(--color-paper-deep)"
+        stroke="var(--color-ink)"
+        strokeWidth="1.5"
+      />
+      <ellipse
+        cx="30"
+        cy="55"
+        rx="15"
+        ry="3"
+        fill="var(--color-paper)"
+        stroke="var(--color-ink)"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M30 55 Q20 40 15 30"
+        fill="none"
+        stroke="oklch(0.7 0.08 140)"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M30 55 Q40 35 45 25"
+        fill="none"
+        stroke="oklch(0.7 0.08 140)"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M30 55 Q30 30 30 20"
+        fill="none"
+        stroke="oklch(0.7 0.08 140)"
+        strokeWidth="1.5"
+      />
+      <ellipse
+        cx="15"
+        cy="30"
+        rx="6"
+        ry="10"
+        fill="oklch(0.85 0.06 145)"
+        stroke="oklch(0.7 0.08 140)"
+        strokeWidth="1"
+        transform="rotate(-20 15 30)"
+      />
+      <ellipse
+        cx="45"
+        cy="25"
+        rx="6"
+        ry="10"
+        fill="oklch(0.85 0.06 145)"
+        stroke="oklch(0.7 0.08 140)"
+        strokeWidth="1"
+        transform="rotate(20 45 25)"
+      />
+      <ellipse
+        cx="30"
+        cy="20"
+        rx="5"
+        ry="9"
+        fill="oklch(0.85 0.06 145)"
+        stroke="oklch(0.7 0.08 140)"
+        strokeWidth="1"
+      />
     </svg>
   );
 }
 
 function PlantDoodle2() {
   return (
-    <svg className="w-[50px] h-[70px]" viewBox="0 0 50 70" fill="none" stroke="var(--color-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '-15px' }}>
-      <path d="M12 48 L38 48 L36 65 L14 65 Z" fill="var(--color-paper-deep)" stroke="var(--color-ink)" strokeWidth="1.5" />
-      <ellipse cx="25" cy="48" rx="13" ry="2.5" fill="var(--color-paper)" stroke="var(--color-ink)" strokeWidth="1.5" />
-      <ellipse cx="25" cy="38" rx="8" ry="5" fill="oklch(0.85 0.06 145)" stroke="oklch(0.7 0.08 140)" strokeWidth="1" transform="rotate(0 25 38)" />
-      <ellipse cx="25" cy="38" rx="8" ry="5" fill="oklch(0.85 0.06 145)" stroke="oklch(0.7 0.08 140)" strokeWidth="1" transform="rotate(60 25 38)" />
-      <ellipse cx="25" cy="38" rx="8" ry="5" fill="oklch(0.85 0.06 145)" stroke="oklch(0.7 0.08 140)" strokeWidth="1" transform="rotate(120 25 38)" />
-      <ellipse cx="25" cy="38" rx="8" ry="5" fill="oklch(0.85 0.06 145)" stroke="oklch(0.7 0.08 140)" strokeWidth="1" transform="rotate(180 25 38)" />
-      <ellipse cx="25" cy="38" rx="8" ry="5" fill="oklch(0.85 0.06 145)" stroke="oklch(0.7 0.08 140)" strokeWidth="1" transform="rotate(240 25 38)" />
-      <ellipse cx="25" cy="38" rx="8" ry="5" fill="oklch(0.85 0.06 145)" stroke="oklch(0.7 0.08 140)" strokeWidth="1" transform="rotate(300 25 38)" />
-      <circle cx="25" cy="38" r="4" fill="oklch(0.85 0.12 85)" stroke="var(--color-ink)" strokeWidth="1" />
+    <svg
+      className="w-[50px] h-[70px]"
+      viewBox="0 0 50 70"
+      fill="none"
+      stroke="var(--color-ink)"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ marginLeft: "-15px" }}
+    >
+      <path
+        d="M12 48 L38 48 L36 65 L14 65 Z"
+        fill="var(--color-paper-deep)"
+        stroke="var(--color-ink)"
+        strokeWidth="1.5"
+      />
+      <ellipse
+        cx="25"
+        cy="48"
+        rx="13"
+        ry="2.5"
+        fill="var(--color-paper)"
+        stroke="var(--color-ink)"
+        strokeWidth="1.5"
+      />
+      <ellipse
+        cx="25"
+        cy="38"
+        rx="8"
+        ry="5"
+        fill="oklch(0.85 0.06 145)"
+        stroke="oklch(0.7 0.08 140)"
+        strokeWidth="1"
+        transform="rotate(0 25 38)"
+      />
+      <ellipse
+        cx="25"
+        cy="38"
+        rx="8"
+        ry="5"
+        fill="oklch(0.85 0.06 145)"
+        stroke="oklch(0.7 0.08 140)"
+        strokeWidth="1"
+        transform="rotate(60 25 38)"
+      />
+      <ellipse
+        cx="25"
+        cy="38"
+        rx="8"
+        ry="5"
+        fill="oklch(0.85 0.06 145)"
+        stroke="oklch(0.7 0.08 140)"
+        strokeWidth="1"
+        transform="rotate(120 25 38)"
+      />
+      <ellipse
+        cx="25"
+        cy="38"
+        rx="8"
+        ry="5"
+        fill="oklch(0.85 0.06 145)"
+        stroke="oklch(0.7 0.08 140)"
+        strokeWidth="1"
+        transform="rotate(180 25 38)"
+      />
+      <ellipse
+        cx="25"
+        cy="38"
+        rx="8"
+        ry="5"
+        fill="oklch(0.85 0.06 145)"
+        stroke="oklch(0.7 0.08 140)"
+        strokeWidth="1"
+        transform="rotate(240 25 38)"
+      />
+      <ellipse
+        cx="25"
+        cy="38"
+        rx="8"
+        ry="5"
+        fill="oklch(0.85 0.06 145)"
+        stroke="oklch(0.7 0.08 140)"
+        strokeWidth="1"
+        transform="rotate(300 25 38)"
+      />
+      <circle
+        cx="25"
+        cy="38"
+        r="4"
+        fill="oklch(0.85 0.12 85)"
+        stroke="var(--color-ink)"
+        strokeWidth="1"
+      />
     </svg>
   );
 }
 
 function CoffeeDoodle() {
   return (
-    <svg className="w-[70px] h-[70px]" viewBox="0 0 70 70" fill="none" stroke="var(--color-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M15 25 L15 50 Q15 58 25 58 L40 58 Q50 58 50 50 L50 25" fill="var(--color-paper-deep)" stroke="var(--color-ink)" strokeWidth="2" />
-      <ellipse cx="32.5" cy="25" rx="17.5" ry="4" fill="var(--color-paper)" stroke="var(--color-ink)" strokeWidth="2" />
-      <path d="M50 32 Q60 32 60 40 Q60 48 50 48" fill="none" stroke="var(--color-ink)" strokeWidth="2" />
-      <ellipse cx="32.5" cy="60" rx="20" ry="4" fill="var(--color-paper-deep)" stroke="var(--color-ink)" strokeWidth="1.5" />
-      <path d="M25 18 Q28 12 25 8" stroke="var(--color-ink)" strokeWidth="1.5" fill="none" opacity="0.4" />
-      <path d="M32 15 Q35 9 32 5" stroke="var(--color-ink)" strokeWidth="1.5" fill="none" opacity="0.4" />
-      <path d="M40 18 Q43 12 40 8" stroke="var(--color-ink)" strokeWidth="1.5" fill="none" opacity="0.4" />
-      <ellipse cx="32.5" cy="28" rx="14" ry="3" fill="oklch(0.45 0.05 45)" stroke="none" opacity="0.75" />
+    <svg
+      className="w-[70px] h-[70px]"
+      viewBox="0 0 70 70"
+      fill="none"
+      stroke="var(--color-ink)"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path
+        d="M15 25 L15 50 Q15 58 25 58 L40 58 Q50 58 50 50 L50 25"
+        fill="var(--color-paper-deep)"
+        stroke="var(--color-ink)"
+        strokeWidth="2"
+      />
+      <ellipse
+        cx="32.5"
+        cy="25"
+        rx="17.5"
+        ry="4"
+        fill="var(--color-paper)"
+        stroke="var(--color-ink)"
+        strokeWidth="2"
+      />
+      <path
+        d="M50 32 Q60 32 60 40 Q60 48 50 48"
+        fill="none"
+        stroke="var(--color-ink)"
+        strokeWidth="2"
+      />
+      <ellipse
+        cx="32.5"
+        cy="60"
+        rx="20"
+        ry="4"
+        fill="var(--color-paper-deep)"
+        stroke="var(--color-ink)"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M25 18 Q28 12 25 8"
+        stroke="var(--color-ink)"
+        strokeWidth="1.5"
+        fill="none"
+        opacity="0.4"
+      />
+      <path
+        d="M32 15 Q35 9 32 5"
+        stroke="var(--color-ink)"
+        strokeWidth="1.5"
+        fill="none"
+        opacity="0.4"
+      />
+      <path
+        d="M40 18 Q43 12 40 8"
+        stroke="var(--color-ink)"
+        strokeWidth="1.5"
+        fill="none"
+        opacity="0.4"
+      />
+      <ellipse
+        cx="32.5"
+        cy="28"
+        rx="14"
+        ry="3"
+        fill="oklch(0.45 0.05 45)"
+        stroke="none"
+        opacity="0.75"
+      />
     </svg>
   );
 }
@@ -95,6 +316,10 @@ function CollectionsPage() {
   const [openCollection, setOpenCollection] = useState<string | null>(null);
   const [customShelves, setCustomShelves] = useState<string[]>([]);
   const [activeEntry, setActiveEntry] = useState<Entry | null>(null);
+  const [imagePreview, setImagePreview] = useState<{
+    src: string;
+    title: string;
+  } | null>(null);
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
@@ -118,7 +343,9 @@ function CollectionsPage() {
 
   useEffect(() => {
     refreshEntries();
-    const stored = JSON.parse(localStorage.getItem("momentstash_custom_shelves") || "[]") as string[];
+    const stored = JSON.parse(
+      localStorage.getItem("momentstash_custom_shelves") || "[]",
+    ) as string[];
     setCustomShelves(stored);
 
     const closeMenu = () => setContextMenu(null);
@@ -147,7 +374,10 @@ function CollectionsPage() {
     return Array.from(map.entries()).sort((a, b) => b[1].length - a[1].length);
   }, [entries, customShelves]);
 
-  const datesWithEntries = useMemo(() => new Set(entries.map((e) => e.date)), [entries]);
+  const datesWithEntries = useMemo(
+    () => new Set(entries.map((e) => e.date)),
+    [entries],
+  );
 
   const selectedEntries = useMemo(
     () => (selectedDate ? entries.filter((e) => e.date === selectedDate) : []),
@@ -175,7 +405,10 @@ function CollectionsPage() {
         }
         const updated = [...customShelves, trimmed];
         setCustomShelves(updated);
-        localStorage.setItem("momentstash_custom_shelves", JSON.stringify(updated));
+        localStorage.setItem(
+          "momentstash_custom_shelves",
+          JSON.stringify(updated),
+        );
         setDialog(null);
       },
     });
@@ -189,11 +422,19 @@ function CollectionsPage() {
       onConfirm: () => {
         const updatedCustom = customShelves.filter((s) => s !== shelfName);
         setCustomShelves(updatedCustom);
-        localStorage.setItem("momentstash_custom_shelves", JSON.stringify(updatedCustom));
+        localStorage.setItem(
+          "momentstash_custom_shelves",
+          JSON.stringify(updatedCustom),
+        );
 
         const allEntries = loadEntries();
-        const updatedEntries = allEntries.filter((e) => e.collection !== shelfName);
-        localStorage.setItem("momentstash_entries", JSON.stringify(updatedEntries));
+        const updatedEntries = allEntries.filter(
+          (e) => e.collection !== shelfName,
+        );
+        localStorage.setItem(
+          "momentstash_entries",
+          JSON.stringify(updatedEntries),
+        );
         setEntries(updatedEntries);
 
         if (openCollection === shelfName) {
@@ -208,11 +449,15 @@ function CollectionsPage() {
     setDialog({
       kind: "confirm",
       title: "Discard Memory?",
-      message: "This fold will be gone forever. Are you sure you want to let it go?",
+      message:
+        "This fold will be gone forever. Are you sure you want to let it go?",
       onConfirm: () => {
         const allEntries = loadEntries();
         const updatedEntries = allEntries.filter((e) => e.id !== entryId);
-        localStorage.setItem("momentstash_entries", JSON.stringify(updatedEntries));
+        localStorage.setItem(
+          "momentstash_entries",
+          JSON.stringify(updatedEntries),
+        );
         setEntries(updatedEntries);
         setActiveEntry(null);
         setDialog(null);
@@ -256,58 +501,84 @@ function CollectionsPage() {
   }, [contextMenu]);
 
   return (
-    <main className="relative min-h-screen lg:h-[calc(100vh-4rem)] overflow-hidden pt-4 pb-32 lg:pb-6 flex flex-col justify-start">
+    <main className="relative flex min-h-screen flex-col justify-start overflow-x-hidden pt-4 pb-[calc(8.5rem+env(safe-area-inset-bottom))] lg:h-[calc(100vh-4rem)] lg:overflow-hidden lg:pb-6">
       <SparkleDoodle className="absolute top-20 left-8 h-6 w-6 text-secondary opacity-60 pointer-events-none" />
-      <StarDoodle className="absolute top-56 right-6 h-7 w-7 text-accent animate-float pointer-events-none" color="oklch(0.85 0.13 90)" />
+      <StarDoodle
+        className="absolute top-56 right-6 h-7 w-7 text-accent animate-float pointer-events-none"
+        color="oklch(0.85 0.13 90)"
+      />
 
       {/* Decorative view background Polaroids */}
-      <div className="fixed top-[120px] -left-[60px] z-0 pointer-events-none opacity-20 dark:opacity-10 hidden xl:block" style={{ transform: 'rotate(-15deg)' }}>
+      <div
+        className="fixed top-[120px] -left-[60px] z-0 pointer-events-none opacity-20 dark:opacity-10 hidden xl:block"
+        style={{ transform: "rotate(-15deg)" }}
+      >
         <div className="bg-paper p-2 pb-6 shadow-md w-[120px] border-2 border-ink/40 rounded-xl">
           <div className="w-full aspect-square bg-tape-pink/40" />
         </div>
       </div>
-      <div className="fixed top-[320px] -right-[60px] z-0 pointer-events-none opacity-20 dark:opacity-10 hidden xl:block" style={{ transform: 'rotate(12deg)' }}>
+      <div
+        className="fixed top-[320px] -right-[60px] z-0 pointer-events-none opacity-20 dark:opacity-10 hidden xl:block"
+        style={{ transform: "rotate(12deg)" }}
+      >
         <div className="bg-paper p-2 pb-6 shadow-md w-[110px] border-2 border-ink/40 rounded-xl">
           <div className="w-full aspect-square bg-tape-mint/40" />
         </div>
       </div>
-      <div className="fixed bottom-[180px] -left-[40px] z-0 pointer-events-none opacity-20 dark:opacity-10 hidden xl:block" style={{ transform: 'rotate(8deg)' }}>
+      <div
+        className="fixed bottom-[180px] -left-[40px] z-0 pointer-events-none opacity-20 dark:opacity-10 hidden xl:block"
+        style={{ transform: "rotate(8deg)" }}
+      >
         <div className="bg-paper p-2 pb-6 shadow-md w-[100px] border-2 border-ink/40 rounded-xl">
           <div className="w-full aspect-square bg-tape-lavender/40" />
         </div>
       </div>
 
-      <header className="relative z-30 mx-auto flex max-w-6xl items-center justify-between px-6 py-6 md:px-10 md:hidden shrink-0">
-        <Link to="/home" className="font-display text-2xl font-bold text-ink">
-          Moment<span className="font-hand text-primary text-3xl">Stash</span>
+      <header className="relative z-30 mx-auto flex w-full max-w-6xl shrink-0 items-center justify-between px-4 py-5 md:px-10 md:hidden">
+        <Link
+          to="/home"
+          className="min-w-0 whitespace-nowrap font-display text-xl font-bold text-ink sm:text-2xl"
+        >
+          Moment
+          <span className="font-hand text-2xl text-primary sm:text-3xl">
+            Stash
+          </span>
         </Link>
-        <div className="flex items-center gap-3">
-          <Link to="/home" className="font-hand text-xl text-ink-soft hover:text-ink">
+        <div className="flex shrink-0 items-center gap-2">
+          <Link
+            to="/home"
+            className="whitespace-nowrap font-hand text-lg text-ink-soft hover:text-ink"
+          >
             ← today
           </Link>
-          <ThemeToggle />
+          <ThemeToggle className="h-9 w-9 shrink-0" />
         </div>
       </header>
 
       <section className="mx-auto max-w-6xl w-full px-6 md:px-10 shrink-0">
-        <p className="font-accent text-xs uppercase tracking-[0.2em] text-ink-soft">your shelves</p>
+        <p className="font-accent text-xs uppercase tracking-[0.2em] text-ink-soft">
+          your shelves
+        </p>
         <div className="relative inline-block">
-          <h1 className="font-display text-4xl md:text-5xl lg:text-6xl text-ink mt-1">Collections</h1>
+          <h1 className="font-display text-4xl md:text-5xl lg:text-6xl text-ink mt-1">
+            Collections
+          </h1>
           <UnderlineSquiggle className="absolute -bottom-2 left-0 h-2 w-full text-primary" />
         </div>
-        <p className="font-hand text-2xl text-ink-soft mt-3">moments, sorted into little jars</p>
+        <p className="font-hand text-2xl text-ink-soft mt-3">
+          moments, sorted into little jars
+        </p>
       </section>
 
       {/* Unified Open Book spread Container */}
-      <section className="mx-auto max-w-6xl w-full px-4 md:px-10 mt-8 lg:mt-6 relative z-10 flex-1 min-h-0 pb-16 lg:pb-8">
-        <div
-          className="grid grid-cols-1 lg:grid-cols-2 rounded-[32px] overflow-hidden relative border-2 border-ink/80 bg-paper/60 backdrop-blur-md shadow-[var(--shadow-paper)] lg:h-full"
-        >
+      <section className="relative z-10 mx-auto mt-8 w-full max-w-6xl flex-1 px-4 pb-6 md:px-10 lg:mt-6 lg:min-h-0 lg:pb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 rounded-[32px] overflow-hidden relative border-2 border-ink/80 bg-paper/60 backdrop-blur-md shadow-[var(--shadow-paper)] lg:h-full">
           {/* Book Spine */}
           <div
             className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-[4px] -translate-x-1/2 z-10 pointer-events-none"
             style={{
-              background: 'linear-gradient(to right, transparent, color-mix(in oklab, var(--color-ink) 12%, transparent), transparent)'
+              background:
+                "linear-gradient(to right, transparent, color-mix(in oklab, var(--color-ink) 12%, transparent), transparent)",
             }}
           />
 
@@ -331,16 +602,19 @@ function CollectionsPage() {
                   no shelves yet — fold a moment first ✿
                 </p>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-y-auto pr-1 flex-1 min-h-0 subtle-scroll pb-4">
+                <div className="-m-2 grid grid-cols-1 gap-5 overflow-visible p-2 pt-4 sm:grid-cols-2 lg:min-h-0 lg:flex-1 lg:overflow-y-auto subtle-scroll">
                   {collections.map(([name, items], idx) => {
                     const tape = tapeFor[idx % tapeFor.length];
                     const cover = items.find((e) => e.photoDataUrl);
-                    const rotate = (idx % 2 === 0 ? -1 : 1) * (1 + (idx % 3) * 0.4);
+                    const rotate =
+                      (idx % 2 === 0 ? -1 : 1) * (1 + (idx % 3) * 0.4);
                     return (
                       <button
                         key={name}
                         onClick={() =>
-                          setOpenCollection((cur) => (cur === name ? null : name))
+                          setOpenCollection((cur) =>
+                            cur === name ? null : name,
+                          )
                         }
                         onContextMenu={(e) => {
                           e.preventDefault();
@@ -355,11 +629,16 @@ function CollectionsPage() {
                           "text-left relative paper-card rounded-xl border-2 p-4 transition-all cursor-pointer h-fit",
                           openCollection === name
                             ? "border-primary bg-primary-soft/10 shadow-[var(--shadow-paper)] -translate-y-0.5"
-                            : "border-ink/80 hover:shadow-[var(--shadow-paper)] hover:-translate-y-0.5"
+                            : "border-ink/80 hover:shadow-[var(--shadow-paper)] hover:-translate-y-0.5",
                         ].join(" ")}
                         style={{ transform: `rotate(${rotate}deg)` }}
                       >
-                        <WashiTape color={tape} rotate={-6} width="4rem" className="absolute -top-2 left-6" />
+                        <WashiTape
+                          color={tape}
+                          rotate={-6}
+                          width="4rem"
+                          className="absolute -top-2 left-6"
+                        />
                         {cover?.photoDataUrl ? (
                           <img
                             src={cover.photoDataUrl}
@@ -368,14 +647,19 @@ function CollectionsPage() {
                           />
                         ) : (
                           <div className="w-full h-24 rounded-lg border border-ink/40 bg-paper-deep/60 grid place-items-center">
-                            <span className="text-4xl">{items[0]?.mood ?? "✿"}</span>
+                            <span className="text-4xl">
+                              {items[0]?.mood ?? "✿"}
+                            </span>
                           </div>
                         )}
                         <div className="flex items-end justify-between mt-2.5">
                           <div className="min-w-0">
-                            <h3 className="font-display text-lg text-ink leading-tight truncate">{name}</h3>
+                            <h3 className="font-display text-lg text-ink leading-tight truncate">
+                              {name}
+                            </h3>
                             <p className="font-hand text-base text-ink-soft">
-                              {items.length} {items.length === 1 ? "fold" : "folds"}
+                              {items.length}{" "}
+                              {items.length === 1 ? "fold" : "folds"}
                             </p>
                           </div>
                           <HeartDoodle className="h-4 w-4 text-primary opacity-60 shrink-0" />
@@ -402,11 +686,20 @@ function CollectionsPage() {
                   <CalendarIcon className="h-5 w-5 text-primary" /> Calendar
                 </h2>
                 <div className="flex items-center gap-2">
-                  <CalNavBtn onClick={() => setMonth(addMonths(month, -1))} dir="left" />
+                  <CalNavBtn
+                    onClick={() => setMonth(addMonths(month, -1))}
+                    dir="left"
+                  />
                   <span className="font-hand text-xl text-ink min-w-[8rem] text-center font-bold">
-                    {month.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+                    {month.toLocaleDateString(undefined, {
+                      month: "long",
+                      year: "numeric",
+                    })}
                   </span>
-                  <CalNavBtn onClick={() => setMonth(addMonths(month, 1))} dir="right" />
+                  <CalNavBtn
+                    onClick={() => setMonth(addMonths(month, 1))}
+                    dir="right"
+                  />
                 </div>
               </div>
 
@@ -421,7 +714,7 @@ function CollectionsPage() {
                 ))}
               </div>
 
-              <div className="grid grid-cols-7 gap-1.5 overflow-y-auto pr-1 flex-1 min-h-0 subtle-scroll">
+              <div className="grid grid-cols-7 gap-1.5 overflow-visible pr-1 lg:min-h-0 lg:flex-1 lg:overflow-y-auto subtle-scroll">
                 {buildMonthCells(month).map((cell, i) => {
                   if (!cell) return <div key={i} />;
                   const iso = isoDate(cell);
@@ -437,16 +730,18 @@ function CollectionsPage() {
                         isSelected
                           ? "bg-primary text-primary-foreground border-ink shadow-[2px_2px_0_var(--color-ink)]"
                           : isToday
-                          ? "bg-accent border-ink text-accent-foreground"
-                          : "border-ink/40 bg-paper/40 hover:border-ink"
+                            ? "bg-accent border-ink text-accent-foreground"
+                            : "border-ink/40 bg-paper/40 hover:border-ink",
                       ].join(" ")}
                     >
-                      <span className="font-accent text-xs font-bold leading-none">{cell.getDate()}</span>
+                      <span className="font-accent text-xs font-bold leading-none">
+                        {cell.getDate()}
+                      </span>
                       {has && (
                         <span
                           className={[
                             "h-1.5 w-1.5 rounded-full absolute bottom-1",
-                            isSelected ? "bg-primary-foreground" : "bg-primary"
+                            isSelected ? "bg-primary-foreground" : "bg-primary",
                           ].join(" ")}
                         />
                       )}
@@ -478,7 +773,12 @@ function CollectionsPage() {
             className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity animate-fade-in"
           />
           <div className="relative w-full max-w-4xl paper-card rounded-[32px] border-2 border-ink p-6 md:p-8 shadow-[var(--shadow-lift)] max-h-[85vh] flex flex-col animate-wobble-in">
-            <WashiTape color="lavender" rotate={-3} width="6rem" className="absolute -top-3 left-12" />
+            <WashiTape
+              color="lavender"
+              rotate={-3}
+              width="6rem"
+              className="absolute -top-3 left-12"
+            />
             <button
               onClick={() => setOpenCollection(null)}
               className="absolute top-4 right-4 h-8 w-8 grid place-items-center rounded-full border-2 border-ink bg-paper text-ink hover:bg-accent cursor-pointer transition-colors font-hand text-xl z-10"
@@ -486,12 +786,15 @@ function CollectionsPage() {
               ✕
             </button>
             <div className="flex items-center gap-3 mb-4 pr-8 shrink-0">
-              <h3 className="font-display text-3xl text-ink font-bold leading-none truncate">{openCollection}</h3>
+              <h3 className="font-display text-3xl text-ink font-bold leading-none truncate">
+                {openCollection}
+              </h3>
               <ArrowSquiggle className="h-5 w-12 text-secondary shrink-0" />
             </div>
 
             <div className="flex-1 overflow-y-auto subtle-scroll pr-1 mt-4">
-              {entries.filter((e) => e.collection === openCollection).length === 0 ? (
+              {entries.filter((e) => e.collection === openCollection).length ===
+              0 ? (
                 <p className="font-hand text-2xl text-ink-soft text-center py-12">
                   this shelf is empty ✿
                 </p>
@@ -518,31 +821,56 @@ function CollectionsPage() {
                         }}
                         className="rounded-2xl border-2 border-ink/60 bg-paper p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all relative cursor-pointer"
                       >
-                        <WashiTape color={e.tape} rotate={2} width="3.5rem" className="absolute -top-2.5 right-6" />
+                        <WashiTape
+                          color={e.tape}
+                          rotate={2}
+                          width="3.5rem"
+                          className="absolute -top-2.5 right-6"
+                        />
+                        {e.photoDataUrl && (
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setImagePreview({
+                                src: e.photoDataUrl!,
+                                title: e.title,
+                              });
+                            }}
+                            className="mb-4 block w-full cursor-zoom-in overflow-hidden rounded-xl border border-ink/40"
+                            aria-label="Enlarge image"
+                          >
+                            <img
+                              src={e.photoDataUrl}
+                              alt=""
+                              className="h-40 w-full object-cover transition-transform duration-200 hover:scale-[1.03]"
+                            />
+                          </button>
+                        )}
                         <div className="flex items-start gap-3">
-                          <span className="text-3xl leading-none shrink-0">{e.mood}</span>
+                          <span className="text-3xl leading-none shrink-0">
+                            {e.mood}
+                          </span>
                           <div className="min-w-0">
-                            <p className="font-display text-xl text-ink font-bold leading-tight truncate">{e.title}</p>
+                            <p className="font-display text-xl text-ink font-bold leading-tight truncate">
+                              {e.title}
+                            </p>
                             <p className="font-hand text-lg text-ink-soft leading-none mt-1">
                               {e.date}
                               {e.place && (
                                 <>
                                   {" · "}
-                                  <MapPin className="inline h-3.5 w-3.5 -mt-0.5 text-primary" /> {e.place}
+                                  <MapPin className="inline h-3.5 w-3.5 -mt-0.5 text-primary" />{" "}
+                                  {e.place}
                                 </>
                               )}
                             </p>
                           </div>
                         </div>
-                        {e.photoDataUrl && (
-                          <img
-                            src={e.photoDataUrl}
-                            alt=""
-                            className="mt-3.5 w-full h-36 object-cover rounded-xl border border-ink/40"
-                          />
-                        )}
                         <p className="font-body text-sm text-ink-soft mt-3.5 leading-relaxed">
-                          {e.note.length > 120 ? e.note.slice(0, 120) + "…" : e.note}
+                          {e.note.length > 120
+                            ? e.note.slice(0, 120) + "…"
+                            : e.note}
                         </p>
                       </li>
                     ))}
@@ -561,7 +889,12 @@ function CollectionsPage() {
             className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity animate-fade-in"
           />
           <div className="relative w-full max-w-3xl paper-card rounded-[32px] border-2 border-ink p-6 md:p-8 shadow-[var(--shadow-lift)] max-h-[85vh] flex flex-col animate-wobble-in">
-            <WashiTape color="yellow" rotate={4} width="5rem" className="absolute -top-3 right-12" />
+            <WashiTape
+              color="yellow"
+              rotate={4}
+              width="5rem"
+              className="absolute -top-3 right-12"
+            />
             <button
               onClick={() => setSelectedDate(null)}
               className="absolute top-4 right-4 h-8 w-8 grid place-items-center rounded-full border-2 border-ink bg-paper text-ink hover:bg-accent cursor-pointer transition-colors font-hand text-xl z-10"
@@ -570,11 +903,14 @@ function CollectionsPage() {
             </button>
             <div className="border-b-2 border-dashed border-ink/30 pb-3 mb-4 pr-8 shrink-0">
               <p className="font-hand text-3xl text-ink font-bold leading-none">
-                {new Date(selectedDate + "T00:00").toLocaleDateString(undefined, {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                })}
+                {new Date(selectedDate + "T00:00").toLocaleDateString(
+                  undefined,
+                  {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                  },
+                )}
               </p>
             </div>
 
@@ -604,12 +940,20 @@ function CollectionsPage() {
                       }}
                       className="flex items-start gap-4 rounded-xl border border-ink/40 bg-paper-deep/35 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
                     >
-                      <span className="text-3xl leading-none shrink-0">{e.mood}</span>
+                      <span className="text-3xl leading-none shrink-0">
+                        {e.mood}
+                      </span>
                       <div className="min-w-0">
-                        <p className="font-display text-lg text-ink font-bold leading-tight">{e.title}</p>
-                        <p className="font-hand text-base text-ink-soft leading-none mt-1">{e.collection || "Unsorted"}</p>
+                        <p className="font-display text-lg text-ink font-bold leading-tight">
+                          {e.title}
+                        </p>
+                        <p className="font-hand text-base text-ink-soft leading-none mt-1">
+                          {e.collection || "Unsorted"}
+                        </p>
                         <p className="font-body text-sm text-ink-soft mt-3.5 leading-relaxed">
-                          {e.note.length > 120 ? e.note.slice(0, 120) + "…" : e.note}
+                          {e.note.length > 120
+                            ? e.note.slice(0, 120) + "…"
+                            : e.note}
                         </p>
                       </div>
                     </li>
@@ -629,7 +973,12 @@ function CollectionsPage() {
             className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity"
           />
           <div className="relative w-full max-w-2xl paper-card rounded-[32px] border-2 border-ink p-6 md:p-8 shadow-[var(--shadow-lift)] max-h-[85vh] flex flex-col animate-wobble-in">
-            <WashiTape color={activeEntry.tape} rotate={-3} width="6rem" className="absolute -top-3 left-10 pointer-events-none" />
+            <WashiTape
+              color={activeEntry.tape}
+              rotate={-3}
+              width="6rem"
+              className="absolute -top-3 left-10 pointer-events-none"
+            />
             <button
               onClick={() => setActiveEntry(null)}
               className="absolute top-4 right-4 h-8 w-8 grid place-items-center rounded-full border-2 border-ink bg-paper text-ink hover:bg-accent cursor-pointer transition-colors font-hand text-xl z-20"
@@ -641,14 +990,22 @@ function CollectionsPage() {
             <div className="flex-1 overflow-y-auto subtle-scroll pr-2 space-y-6 mt-2">
               {/* Header Info */}
               <div className="flex items-start gap-4">
-                <span className="text-4xl leading-none shrink-0">{activeEntry.mood}</span>
+                <span className="text-4xl leading-none shrink-0">
+                  {activeEntry.mood}
+                </span>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-display text-2xl md:text-3xl text-ink font-bold leading-tight">{activeEntry.title}</h3>
+                  <h3 className="font-display text-2xl md:text-3xl text-ink font-bold leading-tight">
+                    {activeEntry.title}
+                  </h3>
                   <p className="font-accent text-xs md:text-sm uppercase tracking-wider text-ink-soft mt-1.5 flex items-center gap-1.5 flex-wrap">
                     <span>{activeEntry.collection || "Unsorted"}</span>
                     <span>·</span>
                     <span className="font-hand text-xl lowercase">
-                      {new Date(activeEntry.date + "T00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" })} ({activeEntry.date})
+                      {new Date(activeEntry.date + "T00:00").toLocaleDateString(
+                        undefined,
+                        { month: "short", day: "numeric" },
+                      )}{" "}
+                      ({activeEntry.date})
                     </span>
                     {activeEntry.place && (
                       <>
@@ -665,11 +1022,23 @@ function CollectionsPage() {
               {/* Photo */}
               {activeEntry.photoDataUrl && (
                 <div className="relative">
-                  <img
-                    src={activeEntry.photoDataUrl}
-                    alt=""
-                    className="w-full max-h-[350px] object-cover rounded-2xl border-2 border-ink/85 shadow-sm"
-                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setImagePreview({
+                        src: activeEntry.photoDataUrl!,
+                        title: activeEntry.title,
+                      })
+                    }
+                    className="block w-full cursor-zoom-in"
+                    aria-label="Enlarge image"
+                  >
+                    <img
+                      src={activeEntry.photoDataUrl}
+                      alt=""
+                      className="w-full max-h-[350px] object-cover rounded-2xl border-2 border-ink/85 shadow-sm"
+                    />
+                  </button>
                 </div>
               )}
 
@@ -698,6 +1067,46 @@ function CollectionsPage() {
         </div>
       )}
 
+      {imagePreview && (
+        <div className="fixed inset-0 z-[140] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
+          <button
+            type="button"
+            onClick={() => setImagePreview(null)}
+            className="absolute inset-0 cursor-zoom-out"
+            aria-label="Close enlarged image"
+          />
+          <div className="relative max-h-[90vh] w-full max-w-5xl">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="truncate font-display text-2xl text-paper">
+                {imagePreview.title}
+              </p>
+              <div className="flex shrink-0 items-center gap-2">
+                <a
+                  href={imagePreview.src}
+                  download={`${imagePreview.title || "momentstash-image"}.jpg`}
+                  className="inline-flex h-10 items-center gap-2 rounded-full border-2 border-paper bg-paper px-4 font-hand text-lg text-ink shadow-[2px_2px_0_var(--color-ink)]"
+                >
+                  <Download className="h-4 w-4" /> Download
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setImagePreview(null)}
+                  className="grid h-10 w-10 place-items-center rounded-full border-2 border-paper bg-paper font-hand text-xl text-ink"
+                  aria-label="Close enlarged image"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <img
+              src={imagePreview.src}
+              alt=""
+              className="mx-auto max-h-[calc(90vh-4rem)] max-w-full rounded-2xl border-2 border-paper object-contain shadow-[var(--shadow-lift)]"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Floating Scrapbook Custom Context Menu */}
       {contextMenu && (
         <div
@@ -712,7 +1121,12 @@ function CollectionsPage() {
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <WashiTape color="yellow" rotate={-2} width="3rem" className="absolute -top-2.5 left-4 pointer-events-none" />
+          <WashiTape
+            color="yellow"
+            rotate={-2}
+            width="3rem"
+            className="absolute -top-2.5 left-4 pointer-events-none"
+          />
           {contextMenu.type === "shelf" ? (
             <button
               onClick={() => {
@@ -756,10 +1170,19 @@ function CollectionsPage() {
             className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
           />
           <div className="relative w-full max-w-md paper-card rounded-[24px] border-2 border-ink p-6 md:p-8 shadow-[var(--shadow-lift)] bg-paper animate-wobble-in flex flex-col z-50">
-            <WashiTape color="pink" rotate={-2} width="5rem" className="absolute -top-3.5 left-12 pointer-events-none" />
+            <WashiTape
+              color="pink"
+              rotate={-2}
+              width="5rem"
+              className="absolute -top-3.5 left-12 pointer-events-none"
+            />
 
-            <h4 className="font-display text-2xl text-ink font-bold mb-3">{dialog.title}</h4>
-            <p className="font-hand text-xl text-ink-soft mb-5 leading-relaxed">{dialog.message}</p>
+            <h4 className="font-display text-2xl text-ink font-bold mb-3">
+              {dialog.title}
+            </h4>
+            <p className="font-hand text-xl text-ink-soft mb-5 leading-relaxed">
+              {dialog.message}
+            </p>
 
             {dialog.kind === "prompt" && (
               <input
@@ -819,14 +1242,24 @@ function CollectionsPage() {
   );
 }
 
-function CalNavBtn({ onClick, dir }: { onClick: () => void; dir: "left" | "right" }) {
+function CalNavBtn({
+  onClick,
+  dir,
+}: {
+  onClick: () => void;
+  dir: "left" | "right";
+}) {
   return (
     <button
       onClick={onClick}
       className="grid h-10 w-10 place-items-center rounded-full border-2 border-ink bg-paper hover:bg-accent cursor-pointer transition-colors"
       aria-label={dir === "left" ? "Previous month" : "Next month"}
     >
-      {dir === "left" ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+      {dir === "left" ? (
+        <ChevronLeft className="h-4 w-4" />
+      ) : (
+        <ChevronRight className="h-4 w-4" />
+      )}
     </button>
   );
 }

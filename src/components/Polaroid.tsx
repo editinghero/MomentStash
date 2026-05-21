@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 
 interface PolaroidProps {
-  src: string;
+  src?: string;
   alt: string;
   caption?: string;
   rotate?: number;
@@ -55,18 +55,23 @@ export function Polaroid({
           style={{ clipPath: "polygon(2% 20%, 98% 8%, 96% 80%, 4% 92%)" }}
         />
       )}
-      <img
-        src={src}
-        alt={alt}
-        loading="lazy"
-        className="block w-full h-full object-cover aspect-square"
-      />
+      <div className="grid aspect-square w-full place-items-center overflow-hidden bg-paper-deep/60">
+        {src ? (
+          <img
+            src={src}
+            alt={alt}
+            loading="lazy"
+            className="block h-full w-full object-cover"
+          />
+        ) : (
+          children
+        )}
+      </div>
       {caption && (
         <p className="absolute bottom-2 left-0 right-0 text-center font-hand text-lg text-ink-soft">
           {caption}
         </p>
       )}
-      {children}
     </div>
   );
 }

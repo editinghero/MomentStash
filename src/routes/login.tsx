@@ -2,7 +2,12 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { StickerButton } from "@/components/StickerButton";
-import { StarDoodle, HeartDoodle, SparkleDoodle, UnderlineSquiggle } from "@/components/Doodles";
+import {
+  StarDoodle,
+  HeartDoodle,
+  SparkleDoodle,
+  UnderlineSquiggle,
+} from "@/components/Doodles";
 import { WashiTape } from "@/components/WashiTape";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -10,7 +15,10 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Sign in — MomentStash" },
-      { name: "description", content: "Sign in to your MomentStash scrapbook." },
+      {
+        name: "description",
+        content: "Sign in to your MomentStash scrapbook.",
+      },
     ],
   }),
   component: LoginPage,
@@ -46,13 +54,19 @@ function LoginPage() {
   };
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-background">
+    <main className="relative min-h-screen overflow-hidden bg-transparent">
       <div className="absolute top-5 right-5 z-30">
         <ThemeToggle />
       </div>
-      <StarDoodle className="absolute top-12 left-10 h-10 w-10 text-accent animate-float" color="oklch(0.85 0.13 90)" />
+      <StarDoodle
+        className="absolute top-12 left-10 h-10 w-10 text-accent animate-float"
+        color="oklch(0.85 0.13 90)"
+      />
       <SparkleDoodle className="absolute top-24 right-16 h-7 w-7 text-secondary opacity-70" />
-      <HeartDoodle className="absolute bottom-20 left-1/4 h-7 w-7 text-primary opacity-70" color="oklch(0.7 0.15 12)" />
+      <HeartDoodle
+        className="absolute bottom-20 left-1/4 h-7 w-7 text-primary opacity-70"
+        color="oklch(0.7 0.15 12)"
+      />
       <SparkleDoodle className="absolute bottom-32 right-20 h-6 w-6 text-tertiary opacity-60" />
 
       <div className="relative z-10 mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 py-16">
@@ -61,8 +75,18 @@ function LoginPage() {
         </Link>
 
         <div className="relative w-full paper-card rounded-[28px] border-2 border-ink/80 p-8 wobble-tilt">
-          <WashiTape color="pink" rotate={-6} width="6rem" className="absolute -top-3 left-8" />
-          <WashiTape color="mint" rotate={8} width="5rem" className="absolute -top-3 right-8" />
+          <WashiTape
+            color="pink"
+            rotate={-6}
+            width="6rem"
+            className="absolute -top-3 left-8"
+          />
+          <WashiTape
+            color="mint"
+            rotate={8}
+            width="5rem"
+            className="absolute -top-3 right-8"
+          />
 
           <div className="text-center mb-6">
             <h1 className="font-display text-3xl text-ink">
@@ -110,7 +134,11 @@ function LoginPage() {
             )}
 
             <StickerButton type="submit" disabled={busy} className="w-full">
-              {busy ? "..." : mode === "login" ? "Open my scrapbook →" : "Create my scrapbook →"}
+              {busy
+                ? "..."
+                : mode === "login"
+                  ? "Open my scrapbook →"
+                  : "Create my scrapbook →"}
             </StickerButton>
           </form>
 

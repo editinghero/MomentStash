@@ -2,7 +2,11 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { addEntry, uid, type Entry, loadEntries } from "@/lib/entries";
 import { WashiTape } from "@/components/WashiTape";
-import { StarDoodle, SparkleDoodle, UnderlineSquiggle } from "@/components/Doodles";
+import {
+  StarDoodle,
+  SparkleDoodle,
+  UnderlineSquiggle,
+} from "@/components/Doodles";
 import { StickerButton } from "@/components/StickerButton";
 import { Camera, X } from "lucide-react";
 
@@ -10,15 +14,38 @@ export const Route = createFileRoute("/_app/create")({
   head: () => ({
     meta: [
       { title: "New Fold — MomentStash" },
-      { name: "description", content: "Tuck a tiny moment into your scrapbook." },
+      {
+        name: "description",
+        content: "Tuck a tiny moment into your scrapbook.",
+      },
     ],
   }),
   component: CreatePage,
 });
 
-const MOODS = ["☕", "🌸", "🌇", "🥐", "📖", "🌿", "✨", "🧺", "🌧️", "🍋", "💌", "🎶"];
+const MOODS = [
+  "☕",
+  "🌸",
+  "🌇",
+  "🥐",
+  "📖",
+  "🌿",
+  "✨",
+  "🧺",
+  "🌧️",
+  "🍋",
+  "💌",
+  "🎶",
+];
 const TAPES = ["pink", "mint", "lavender", "yellow"] as const;
-const SUGGESTED = ["Mornings", "Tiny Joys", "Sunsets", "Quiet", "Travel", "Friends"];
+const SUGGESTED = [
+  "Mornings",
+  "Tiny Joys",
+  "Sunsets",
+  "Quiet",
+  "Travel",
+  "Friends",
+];
 
 function CreatePage() {
   const navigate = useNavigate();
@@ -35,16 +62,23 @@ function CreatePage() {
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [photo, setPhoto] = useState<string | undefined>();
   const [saving, setSaving] = useState(false);
-  const [shelfMode, setShelfMode] = useState<"unsorted" | "existing" | "new">("unsorted");
-  const [alertConfig, setAlertConfig] = useState<{ title: string; message: string } | null>(null);
+  const [shelfMode, setShelfMode] = useState<"unsorted" | "existing" | "new">(
+    "unsorted",
+  );
+  const [alertConfig, setAlertConfig] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
 
   const previewRotate = -2;
 
   useEffect(() => {
     const entries = loadEntries();
-    const custom = JSON.parse(localStorage.getItem("momentstash_custom_shelves") || "[]") as string[];
+    const custom = JSON.parse(
+      localStorage.getItem("momentstash_custom_shelves") || "[]",
+    ) as string[];
     const merged = Array.from(
-      new Set([...custom, ...entries.map((e) => e.collection).filter(Boolean)])
+      new Set([...custom, ...entries.map((e) => e.collection).filter(Boolean)]),
     );
     setExistingShelves(merged.length > 0 ? merged : SUGGESTED);
   }, []);
@@ -111,7 +145,8 @@ function CreatePage() {
     if (!success) {
       setAlertConfig({
         title: "MomentStash is Full! ⚠️",
-        message: "Oh no! Your MomentStash is full (browser storage limit exceeded). To save this memory, please delete some older notes/photos first, or use a smaller/different photo!",
+        message:
+          "Oh no! Your MomentStash is full (browser storage limit exceeded). To save this memory, please delete some older notes/photos first, or use a smaller/different photo!",
       });
       setSaving(false);
       return;
@@ -119,10 +154,17 @@ function CreatePage() {
 
     // Persist dynamic shelf permanently if it is a new shelf
     if (entryCollection) {
-      const custom = JSON.parse(localStorage.getItem("momentstash_custom_shelves") || "[]") as string[];
-      if (!custom.some((s) => s.toLowerCase() === entryCollection.toLowerCase())) {
+      const custom = JSON.parse(
+        localStorage.getItem("momentstash_custom_shelves") || "[]",
+      ) as string[];
+      if (
+        !custom.some((s) => s.toLowerCase() === entryCollection.toLowerCase())
+      ) {
         const updated = [...custom, entryCollection];
-        localStorage.setItem("momentstash_custom_shelves", JSON.stringify(updated));
+        localStorage.setItem(
+          "momentstash_custom_shelves",
+          JSON.stringify(updated),
+        );
       }
     }
 
@@ -132,30 +174,56 @@ function CreatePage() {
   return (
     <main className="relative min-h-screen overflow-hidden pt-4 pb-44">
       <SparkleDoodle className="absolute top-20 left-8 h-6 w-6 text-secondary opacity-60" />
-      <StarDoodle className="absolute top-44 right-10 h-7 w-7 text-accent animate-float" color="oklch(0.85 0.13 90)" />
+      <StarDoodle
+        className="absolute top-44 right-10 h-7 w-7 text-accent animate-float"
+        color="oklch(0.85 0.13 90)"
+      />
 
-      <header className="relative z-30 mx-auto flex max-w-6xl items-center justify-between px-6 py-6 md:px-10 md:hidden">
-        <Link to="/home" className="font-display text-2xl font-bold text-ink">
-          Moment<span className="font-hand text-primary text-3xl">Stash</span>
+      <header className="relative z-30 mx-auto flex max-w-6xl items-center justify-between px-4 py-5 md:px-10 md:hidden">
+        <Link
+          to="/home"
+          className="min-w-0 whitespace-nowrap font-display text-xl font-bold text-ink sm:text-2xl"
+        >
+          Moment
+          <span className="font-hand text-2xl text-primary sm:text-3xl">
+            Stash
+          </span>
         </Link>
-        <Link to="/home" className="font-hand text-xl text-ink-soft hover:text-ink">
+        <Link
+          to="/home"
+          className="shrink-0 whitespace-nowrap font-hand text-lg text-ink-soft hover:text-ink"
+        >
           ← today
         </Link>
       </header>
 
       <section className="mx-auto max-w-6xl px-6 md:px-10">
-        <p className="font-accent text-xs uppercase tracking-[0.2em] text-ink-soft">a new fold</p>
+        <p className="font-accent text-xs uppercase tracking-[0.2em] text-ink-soft">
+          a new fold
+        </p>
         <div className="relative inline-block">
-          <h1 className="font-display text-5xl md:text-6xl text-ink mt-1">Tuck it in</h1>
+          <h1 className="font-display text-5xl md:text-6xl text-ink mt-1">
+            Tuck it in
+          </h1>
           <UnderlineSquiggle className="absolute -bottom-2 left-0 h-2 w-full text-primary" />
         </div>
-        <p className="font-hand text-2xl text-ink-soft mt-3">small moments, kept on purpose</p>
+        <p className="font-hand text-2xl text-ink-soft mt-3">
+          small moments, kept on purpose
+        </p>
       </section>
 
       <section className="mx-auto max-w-6xl px-6 md:px-10 mt-10 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10">
         {/* Form */}
-        <form onSubmit={onSave} className="paper-card rounded-2xl border-2 border-ink/80 p-6 md:p-8 space-y-6">
-          <WashiTape color={tape} rotate={-5} width="6rem" className="absolute -top-3 left-10" />
+        <form
+          onSubmit={onSave}
+          className="paper-card rounded-2xl border-2 border-ink/80 p-6 md:p-8 space-y-6"
+        >
+          <WashiTape
+            color={tape}
+            rotate={-5}
+            width="6rem"
+            className="absolute -top-3 left-10"
+          />
 
           <Field label="title">
             <input
@@ -273,7 +341,8 @@ function CreatePage() {
             {/* Inner Content Based on Mode */}
             {shelfMode === "unsorted" && (
               <p className="font-hand text-lg text-ink-soft italic">
-                ✿ This memory will sit directly in your timeline without a shelf.
+                ✿ This memory will sit directly in your timeline without a
+                shelf.
               </p>
             )}
 
@@ -333,7 +402,9 @@ function CreatePage() {
                   className={[
                     "h-10 w-16 rounded-md border-2 transition-all",
                     `bg-tape-${t}`,
-                    tape === t ? "border-ink shadow-[2px_2px_0_var(--color-ink)]" : "border-ink/30",
+                    tape === t
+                      ? "border-ink shadow-[2px_2px_0_var(--color-ink)]"
+                      : "border-ink/30",
                   ].join(" ")}
                 />
               ))}
@@ -396,7 +467,12 @@ function CreatePage() {
             className="relative paper-card rounded-2xl border-2 border-ink/80 p-5"
             style={{ transform: `rotate(${previewRotate}deg)` }}
           >
-            <WashiTape color={tape} rotate={-6} width="5rem" className="absolute -top-3 left-6" />
+            <WashiTape
+              color={tape}
+              rotate={-6}
+              width="5rem"
+              className="absolute -top-3 left-6"
+            />
             <div className="flex items-start gap-2">
               <span className="text-3xl">{mood}</span>
               <div className="flex-1 min-w-0">
@@ -449,9 +525,18 @@ function CreatePage() {
             className="absolute inset-0 transition-opacity"
           />
           <div className="relative w-full max-w-md paper-card rounded-[24px] border-2 border-ink p-6 md:p-8 shadow-[var(--shadow-lift)] bg-paper animate-wobble-in flex flex-col z-50">
-            <WashiTape color="pink" rotate={-2} width="5rem" className="absolute -top-3.5 left-12 pointer-events-none" />
-            <h4 className="font-display text-2xl text-ink font-bold mb-3">{alertConfig.title}</h4>
-            <p className="font-hand text-xl text-ink-soft mb-6 leading-relaxed">{alertConfig.message}</p>
+            <WashiTape
+              color="pink"
+              rotate={-2}
+              width="5rem"
+              className="absolute -top-3.5 left-12 pointer-events-none"
+            />
+            <h4 className="font-display text-2xl text-ink font-bold mb-3">
+              {alertConfig.title}
+            </h4>
+            <p className="font-hand text-xl text-ink-soft mb-6 leading-relaxed">
+              {alertConfig.message}
+            </p>
             <div className="flex items-center justify-end">
               <button
                 type="button"
@@ -468,7 +553,13 @@ function CreatePage() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <label className="block">
       <span className="block font-accent text-xs uppercase tracking-[0.2em] text-ink-soft mb-2">

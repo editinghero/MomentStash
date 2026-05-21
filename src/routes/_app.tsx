@@ -17,14 +17,14 @@ function AppLayout() {
 
   if (!ready || !user) {
     return (
-      <div className="min-h-screen grid place-items-center bg-background">
+      <div className="min-h-screen grid place-items-center bg-transparent">
         <p className="font-hand text-2xl text-ink-soft">unfolding…</p>
       </div>
     );
   }
 
   return (
-    <div className="pt-0 md:pt-16 min-h-screen">
+    <div className="min-h-screen bg-transparent pt-0 md:pt-16">
       <Outlet />
       <AppNav />
     </div>

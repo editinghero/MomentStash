@@ -3,7 +3,12 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { loadEntries, type Entry } from "@/lib/entries";
 import { WashiTape } from "@/components/WashiTape";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { StarDoodle, HeartDoodle, SparkleDoodle, UnderlineSquiggle } from "@/components/Doodles";
+import {
+  StarDoodle,
+  HeartDoodle,
+  SparkleDoodle,
+  UnderlineSquiggle,
+} from "@/components/Doodles";
 import { MapPin, Search } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -54,8 +59,12 @@ function TimelinePage() {
     refreshEntries();
 
     // Load dynamic shelves
-    const stored = JSON.parse(localStorage.getItem("momentstash_custom_shelves") || "[]") as string[];
-    const activeShelves = loadEntries().map((e) => e.collection).filter(Boolean);
+    const stored = JSON.parse(
+      localStorage.getItem("momentstash_custom_shelves") || "[]",
+    ) as string[];
+    const activeShelves = loadEntries()
+      .map((e) => e.collection)
+      .filter(Boolean);
     const merged = Array.from(new Set([...stored, ...activeShelves]));
     setShelves(merged);
 
@@ -76,9 +85,18 @@ function TimelinePage() {
       // Animate timeline cards on scroll
       ScrollTrigger.batch(".timeline-card", {
         onEnter: (elements) => {
-          gsap.fromTo(elements, 
+          gsap.fromTo(
+            elements,
             { opacity: 0, y: 40, scale: 0.96 },
-            { opacity: 1, y: 0, scale: 1, stagger: 0.1, duration: 0.6, ease: "back.out(1.4)", overwrite: true }
+            {
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              stagger: 0.1,
+              duration: 0.6,
+              ease: "back.out(1.4)",
+              overwrite: true,
+            },
           );
         },
         start: "top 88%",
@@ -87,9 +105,18 @@ function TimelinePage() {
       // Animate date pins
       ScrollTrigger.batch(".date-pin", {
         onEnter: (elements) => {
-          gsap.fromTo(elements,
+          gsap.fromTo(
+            elements,
             { opacity: 0, x: -20, scale: 0.8 },
-            { opacity: 1, x: 0, scale: 1, stagger: 0.08, duration: 0.5, ease: "back.out(2)", overwrite: true }
+            {
+              opacity: 1,
+              x: 0,
+              scale: 1,
+              stagger: 0.08,
+              duration: 0.5,
+              ease: "back.out(2)",
+              overwrite: true,
+            },
           );
         },
         start: "top 90%",
@@ -104,7 +131,7 @@ function TimelinePage() {
           start: "top top",
           end: "bottom top",
           scrub: 0.5,
-        }
+        },
       });
     }, timelineRef);
 
@@ -137,11 +164,15 @@ function TimelinePage() {
     setDialog({
       kind: "confirm",
       title: "Discard Memory?",
-      message: "This fold will be gone forever. Are you sure you want to let it go?",
+      message:
+        "This fold will be gone forever. Are you sure you want to let it go?",
       onConfirm: () => {
         const allEntries = loadEntries();
         const updatedEntries = allEntries.filter((e) => e.id !== entryId);
-        localStorage.setItem("momentstash_entries", JSON.stringify(updatedEntries));
+        localStorage.setItem(
+          "momentstash_entries",
+          JSON.stringify(updatedEntries),
+        );
         setEntries(updatedEntries);
         setActiveEntry(null);
         setDialog(null);
@@ -164,9 +195,14 @@ function TimelinePage() {
     if (newShelf.trim() && !shelves.includes(newShelf.trim())) {
       const updatedShelves = [...shelves, newShelf.trim()];
       setShelves(updatedShelves);
-      const custom = JSON.parse(localStorage.getItem("momentstash_custom_shelves") || "[]") as string[];
+      const custom = JSON.parse(
+        localStorage.getItem("momentstash_custom_shelves") || "[]",
+      ) as string[];
       if (!custom.includes(newShelf.trim())) {
-        localStorage.setItem("momentstash_custom_shelves", JSON.stringify([...custom, newShelf.trim()]));
+        localStorage.setItem(
+          "momentstash_custom_shelves",
+          JSON.stringify([...custom, newShelf.trim()]),
+        );
       }
     }
   };
@@ -195,33 +231,59 @@ function TimelinePage() {
   }, [contextMenu]);
 
   return (
-    <main ref={mainRef} className="relative min-h-screen overflow-hidden pt-4 pb-44">
+    <main
+      ref={mainRef}
+      className="relative min-h-screen overflow-hidden pt-4 pb-44"
+    >
       <div className="timeline-header-doodles">
         <SparkleDoodle className="absolute top-20 right-10 h-6 w-6 text-secondary opacity-60 pointer-events-none" />
-        <StarDoodle className="absolute top-72 left-4 h-7 w-7 text-accent animate-float pointer-events-none" color="oklch(0.85 0.13 90)" />
+        <StarDoodle
+          className="absolute top-72 left-4 h-7 w-7 text-accent animate-float pointer-events-none"
+          color="oklch(0.85 0.13 90)"
+        />
       </div>
 
-      <header className="relative z-30 mx-auto flex max-w-5xl items-center justify-between px-6 py-6 md:px-10 md:hidden">
-        <Link to="/home" className="font-display text-2xl font-bold text-ink">
-          Moment<span className="font-hand text-primary text-3xl">Stash</span>
+      <header className="relative z-30 mx-auto flex max-w-5xl items-center justify-between px-4 py-5 md:px-10 md:hidden">
+        <Link
+          to="/home"
+          className="min-w-0 whitespace-nowrap font-display text-xl font-bold text-ink sm:text-2xl"
+        >
+          Moment
+          <span className="font-hand text-2xl text-primary sm:text-3xl">
+            Stash
+          </span>
         </Link>
-        <div className="flex items-center gap-3">
-          <Link to="/home" className="font-hand text-xl text-ink-soft hover:text-ink">
+        <div className="flex shrink-0 items-center gap-2">
+          <Link
+            to="/home"
+            className="whitespace-nowrap font-hand text-lg text-ink-soft hover:text-ink"
+          >
             ← today
           </Link>
-          <ThemeToggle />
+          <ThemeToggle className="h-9 w-9 shrink-0" />
         </div>
       </header>
 
-      <section className={["mx-auto max-w-5xl px-6 md:px-10 transition-all duration-300", activeEntry ? "blur-[2px] opacity-40 select-none pointer-events-none" : ""].join(" ")}>
+      <section
+        className={[
+          "mx-auto max-w-5xl px-6 md:px-10 transition-all duration-300",
+          activeEntry
+            ? "blur-[2px] opacity-40 select-none pointer-events-none"
+            : "",
+        ].join(" ")}
+      >
         <p className="font-accent text-xs uppercase tracking-[0.2em] text-ink-soft">
           all your folds
         </p>
         <div className="relative inline-block">
-          <h1 className="font-display text-5xl md:text-6xl text-ink mt-1">Timeline</h1>
+          <h1 className="font-display text-5xl md:text-6xl text-ink mt-1">
+            Timeline
+          </h1>
           <UnderlineSquiggle className="absolute -bottom-2 left-0 h-2 w-full text-primary" />
         </div>
-        <p className="font-hand text-2xl text-ink-soft mt-3">scroll back, gently</p>
+        <p className="font-hand text-2xl text-ink-soft mt-3">
+          scroll back, gently
+        </p>
 
         {/* Search */}
         <div className="relative mt-6 max-w-md">
@@ -236,7 +298,15 @@ function TimelinePage() {
       </section>
 
       {/* Timeline */}
-      <section ref={timelineRef} className={["relative mx-auto max-w-5xl px-6 md:px-10 mt-12 transition-all duration-300", activeEntry ? "blur-[2px] opacity-40 select-none pointer-events-none" : ""].join(" ")}>
+      <section
+        ref={timelineRef}
+        className={[
+          "relative mx-auto max-w-5xl px-6 md:px-10 mt-12 transition-all duration-300",
+          activeEntry
+            ? "blur-[2px] opacity-40 select-none pointer-events-none"
+            : "",
+        ].join(" ")}
+      >
         {/* dashed axis */}
         <div
           aria-hidden
@@ -259,7 +329,9 @@ function TimelinePage() {
               {/* date pin */}
               <div className="date-pin relative z-10 mb-6 flex items-center gap-3 md:justify-center">
                 <span className="ml-2 md:ml-0 grid place-items-center h-10 min-w-[3rem] rounded-full bg-primary text-primary-foreground border-2 border-ink shadow-[3px_3px_0_var(--color-ink)] px-3">
-                  <span className="font-hand text-xl leading-none">{prettyDate(date)}</span>
+                  <span className="font-hand text-xl leading-none">
+                    {prettyDate(date)}
+                  </span>
                 </span>
               </div>
 
@@ -270,7 +342,9 @@ function TimelinePage() {
                     className={[
                       "relative pl-16",
                       "md:pl-0 md:w-1/2",
-                      (gi + i) % 2 === 0 ? "md:mr-auto md:pr-10" : "md:ml-auto md:pl-10",
+                      (gi + i) % 2 === 0
+                        ? "md:mr-auto md:pr-10"
+                        : "md:ml-auto md:pl-10",
                     ].join(" ")}
                   >
                     {/* node */}
@@ -311,7 +385,12 @@ function TimelinePage() {
             className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity animate-fade-in"
           />
           <div className="relative w-full max-w-2xl paper-card rounded-[32px] border-2 border-ink p-6 md:p-8 shadow-[var(--shadow-lift)] max-h-[85vh] flex flex-col animate-wobble-in">
-            <WashiTape color={activeEntry.tape} rotate={-3} width="6rem" className="absolute -top-3 left-10 pointer-events-none" />
+            <WashiTape
+              color={activeEntry.tape}
+              rotate={-3}
+              width="6rem"
+              className="absolute -top-3 left-10 pointer-events-none"
+            />
             <button
               onClick={() => setActiveEntry(null)}
               className="absolute top-4 right-4 h-8 w-8 grid place-items-center rounded-full border-2 border-ink bg-paper text-ink hover:bg-accent cursor-pointer transition-colors font-hand text-xl z-20"
@@ -323,13 +402,19 @@ function TimelinePage() {
             <div className="flex-1 overflow-y-auto subtle-scroll pr-2 space-y-6 mt-2">
               {/* Header Info */}
               <div className="flex items-start gap-4">
-                <span className="text-4xl leading-none shrink-0">{activeEntry.mood}</span>
+                <span className="text-4xl leading-none shrink-0">
+                  {activeEntry.mood}
+                </span>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-display text-2xl md:text-3xl text-ink font-bold leading-tight">{activeEntry.title}</h3>
+                  <h3 className="font-display text-2xl md:text-3xl text-ink font-bold leading-tight">
+                    {activeEntry.title}
+                  </h3>
                   <p className="font-accent text-xs md:text-sm uppercase tracking-wider text-ink-soft mt-1.5 flex items-center gap-1.5 flex-wrap">
                     <span>{activeEntry.collection || "Unsorted"}</span>
                     <span>·</span>
-                    <span className="font-hand text-xl lowercase">{prettyDate(activeEntry.date)} ({activeEntry.date})</span>
+                    <span className="font-hand text-xl lowercase">
+                      {prettyDate(activeEntry.date)} ({activeEntry.date})
+                    </span>
                     {activeEntry.place && (
                       <>
                         <span>·</span>
@@ -392,8 +477,13 @@ function TimelinePage() {
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <WashiTape color="yellow" rotate={-2} width="3.5rem" className="absolute -top-2.5 left-4 pointer-events-none" />
-          
+          <WashiTape
+            color="yellow"
+            rotate={-2}
+            width="3.5rem"
+            className="absolute -top-2.5 left-4 pointer-events-none"
+          />
+
           <button
             onClick={() => {
               handleDeleteEntry(contextMenu.targetId);
@@ -403,20 +493,20 @@ function TimelinePage() {
           >
             <span>🗑</span> Delete Fold
           </button>
-          
+
           {/* Submenu for moving to shelf */}
           <div className="relative group/shelf">
-            <button
-              className="text-left font-hand text-lg hover:bg-accent/40 text-ink px-3 py-1.5 rounded-lg transition-colors cursor-pointer w-full flex items-center justify-between gap-2"
-            >
+            <button className="text-left font-hand text-lg hover:bg-accent/40 text-ink px-3 py-1.5 rounded-lg transition-colors cursor-pointer w-full flex items-center justify-between gap-2">
               <span>📁 Move to Shelf</span>
               <span className="text-xs">➜</span>
             </button>
-            
-            <div className={[
-              "absolute top-0 bg-paper border-2 border-ink p-2 rounded-xl shadow-[var(--shadow-paper)] flex flex-col min-w-[150px] hidden group-hover/shelf:block animate-fade-in",
-              isNearRight ? "right-full mr-1" : "left-full ml-1"
-            ].join(" ")}>
+
+            <div
+              className={[
+                "absolute top-0 bg-paper border-2 border-ink p-2 rounded-xl shadow-[var(--shadow-paper)] flex flex-col min-w-[150px] hidden group-hover/shelf:block animate-fade-in",
+                isNearRight ? "right-full mr-1" : "left-full ml-1",
+              ].join(" ")}
+            >
               <button
                 onClick={() => {
                   handleMoveEntry(contextMenu.targetId, "");
@@ -426,9 +516,11 @@ function TimelinePage() {
               >
                 ✿ Unsorted
               </button>
-              
-              {shelves.length > 0 && <div className="border-t border-dashed border-ink/20 my-1" />}
-              
+
+              {shelves.length > 0 && (
+                <div className="border-t border-dashed border-ink/20 my-1" />
+              )}
+
               {shelves.map((s) => (
                 <button
                   key={s}
@@ -454,9 +546,18 @@ function TimelinePage() {
             className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
           />
           <div className="relative w-full max-w-md paper-card rounded-[24px] border-2 border-ink p-6 md:p-8 shadow-[var(--shadow-lift)] bg-paper animate-wobble-in flex flex-col z-50">
-            <WashiTape color="pink" rotate={-2} width="5rem" className="absolute -top-3.5 left-12 pointer-events-none" />
-            <h4 className="font-display text-2xl text-ink font-bold mb-3">{dialog.title}</h4>
-            <p className="font-hand text-xl text-ink-soft mb-5 leading-relaxed">{dialog.message}</p>
+            <WashiTape
+              color="pink"
+              rotate={-2}
+              width="5rem"
+              className="absolute -top-3.5 left-12 pointer-events-none"
+            />
+            <h4 className="font-display text-2xl text-ink font-bold mb-3">
+              {dialog.title}
+            </h4>
+            <p className="font-hand text-xl text-ink-soft mb-5 leading-relaxed">
+              {dialog.message}
+            </p>
             <div className="flex items-center justify-end gap-3">
               <button
                 type="button"
@@ -510,11 +611,18 @@ function EntryCard({
       className="timeline-card relative paper-card rounded-2xl border-2 border-ink/80 p-5 shadow-[var(--shadow-paper)] cursor-pointer hover:shadow-[var(--shadow-lift)] transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] group"
       style={{ transform: `rotate(${entry.rotate * 0.5}deg)` }}
     >
-      <WashiTape color={entry.tape} rotate={-5} width="4.5rem" className="absolute -top-3 left-6" />
+      <WashiTape
+        color={entry.tape}
+        rotate={-5}
+        width="4.5rem"
+        className="absolute -top-3 left-6"
+      />
       <div className="flex items-start gap-3">
         <span className="text-3xl leading-none">{entry.mood}</span>
         <div className="flex-1">
-          <h3 className="font-display text-2xl text-ink leading-tight group-hover:text-primary transition-colors">{entry.title}</h3>
+          <h3 className="font-display text-2xl text-ink leading-tight group-hover:text-primary transition-colors">
+            {entry.title}
+          </h3>
           <p className="font-accent text-xs uppercase tracking-widest text-ink-soft mt-1">
             {entry.collection || "Unsorted"}
             {entry.place && (
@@ -538,7 +646,11 @@ function EntryCard({
 
       <p className="font-body text-ink-soft mt-3 leading-relaxed">
         {summary}
-        {isLong && <span className="text-primary font-hand text-base ml-2 inline-block">read fold ➜</span>}
+        {isLong && (
+          <span className="text-primary font-hand text-base ml-2 inline-block">
+            read fold ➜
+          </span>
+        )}
       </p>
 
       {entry.tags.length > 0 && (
