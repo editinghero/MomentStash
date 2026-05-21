@@ -332,6 +332,7 @@ function CollectionsPage() {
     return d;
   });
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [hoveredShelf, setHoveredShelf] = useState<string | null>(null);
 
   /* ── Scrapbook Dialog State ── */
   const [dialog, setDialog] = useState<ScrapbookDialog | null>(null);
@@ -602,15 +603,18 @@ function CollectionsPage() {
                   no shelves yet — fold a moment first ✿
                 </p>
               ) : (
-                <div className="-m-2 grid grid-cols-1 gap-5 overflow-visible p-2 pt-4 sm:grid-cols-2 lg:min-h-0 lg:flex-1 lg:overflow-y-auto subtle-scroll">
+                <div className="-m-4 grid grid-cols-1 gap-6 overflow-visible p-4 pt-10 pb-6 sm:grid-cols-2 lg:min-h-0 lg:flex-1 lg:overflow-y-auto subtle-scroll">
                   {collections.map(([name, items], idx) => {
                     const tape = tapeFor[idx % tapeFor.length];
                     const cover = items.find((e) => e.photoDataUrl);
                     const rotate =
                       (idx % 2 === 0 ? -1 : 1) * (1 + (idx % 3) * 0.4);
+                    const isHovered = hoveredShelf === name;
                     return (
                       <button
                         key={name}
+                        onMouseEnter={() => setHoveredShelf(name)}
+                        onMouseLeave={() => setHoveredShelf(null)}
                         onClick={() =>
                           setOpenCollection((cur) =>
                             cur === name ? null : name,
@@ -628,10 +632,15 @@ function CollectionsPage() {
                         className={[
                           "text-left relative paper-card rounded-xl border-2 p-4 transition-all cursor-pointer h-fit",
                           openCollection === name
-                            ? "border-primary bg-primary-soft/10 shadow-[var(--shadow-paper)] -translate-y-0.5"
-                            : "border-ink/80 hover:shadow-[var(--shadow-paper)] hover:-translate-y-0.5",
+                            ? "border-primary bg-primary-soft/10 shadow-[var(--shadow-paper)] z-10"
+                            : isHovered
+                              ? "border-ink/80 bg-accent/20 shadow-[var(--shadow-paper)] z-10"
+                              : "border-ink/80 z-0",
                         ].join(" ")}
-                        style={{ transform: `rotate(${rotate}deg)` }}
+                        style={{
+                          transform: `rotate(${rotate}deg) ${isHovered ? "scale(1.04) translateY(-5px)" : "scale(1) translateY(0)"}`,
+                          transition: "transform 0.2s ease, border-width 0.1s ease, box-shadow 0.2s ease",
+                        }}
                       >
                         <WashiTape
                           color={tape}
@@ -819,7 +828,7 @@ function CollectionsPage() {
                             targetId: e.id,
                           });
                         }}
-                        className="rounded-2xl border-2 border-ink/60 bg-paper p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all relative cursor-pointer"
+                        className="rounded-2xl border-2 border-ink/60 bg-paper p-5 shadow-sm hover:shadow-[var(--shadow-paper)] hover:bg-accent/10 transition-all duration-200 relative cursor-pointer"
                       >
                         <WashiTape
                           color={e.tape}

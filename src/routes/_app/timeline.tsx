@@ -9,7 +9,7 @@ import {
   SparkleDoodle,
   UnderlineSquiggle,
 } from "@/components/Doodles";
-import { MapPin, Search } from "lucide-react";
+import { MapPin, Search, Download } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -47,6 +47,12 @@ function TimelinePage() {
   /* ── Scrapbook Dialog State ── */
   const [dialog, setDialog] = useState<ConfirmDialog | null>(null);
 
+  /* ── Image Preview State ── */
+  const [imagePreview, setImagePreview] = useState<{
+    src: string;
+    title: string;
+  } | null>(null);
+
   /* ── GSAP refs ── */
   const mainRef = useRef<HTMLElement>(null);
   const timelineRef = useRef<HTMLElement>(null);
@@ -81,48 +87,52 @@ function TimelinePage() {
   useEffect(() => {
     if (!timelineRef.current) return;
 
+    const isSearching = q.trim().length > 0;
+
     const ctx = gsap.context(() => {
-      // Animate timeline cards on scroll
-      ScrollTrigger.batch(".timeline-card", {
-        onEnter: (elements) => {
-          gsap.fromTo(
-            elements,
-            { opacity: 0, y: 40, scale: 0.96 },
-            {
-              opacity: 1,
-              y: 0,
-              scale: 1,
-              stagger: 0.1,
-              duration: 0.6,
-              ease: "back.out(1.4)",
-              overwrite: true,
-            },
-          );
-        },
-        start: "top 88%",
-      });
+      if (!isSearching) {
+        // Animate timeline cards on scroll
+        ScrollTrigger.batch(".timeline-card", {
+          onEnter: (elements) => {
+            gsap.fromTo(
+              elements,
+              { opacity: 0, y: 40, scale: 0.96 },
+              {
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                stagger: 0.1,
+                duration: 0.6,
+                ease: "back.out(1.4)",
+                overwrite: true,
+              },
+            );
+          },
+          start: "top 88%",
+        });
 
-      // Animate date pins
-      ScrollTrigger.batch(".date-pin", {
-        onEnter: (elements) => {
-          gsap.fromTo(
-            elements,
-            { opacity: 0, x: -20, scale: 0.8 },
-            {
-              opacity: 1,
-              x: 0,
-              scale: 1,
-              stagger: 0.08,
-              duration: 0.5,
-              ease: "back.out(2)",
-              overwrite: true,
-            },
-          );
-        },
-        start: "top 90%",
-      });
+        // Animate date pins
+        ScrollTrigger.batch(".date-pin", {
+          onEnter: (elements) => {
+            gsap.fromTo(
+              elements,
+              { opacity: 0, x: -20, scale: 0.8 },
+              {
+                opacity: 1,
+                x: 0,
+                scale: 1,
+                stagger: 0.08,
+                duration: 0.5,
+                ease: "back.out(2)",
+                overwrite: true,
+              },
+            );
+          },
+          start: "top 90%",
+        });
+      }
 
-      // Animate the header section with a subtle parallax
+      // Animate the header section with a subtle parallax (always run this!)
       gsap.to(".timeline-header-doodles", {
         yPercent: -30,
         ease: "none",
@@ -136,17 +146,19 @@ function TimelinePage() {
     }, timelineRef);
 
     return () => ctx.revert();
-  }, [entries]); // re-run when entries change to re-animate newly loaded cards
+  }, [entries, q]); // re-run when entries or search changes
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return entries;
     return entries.filter(
       (e) =>
-        e.title.toLowerCase().includes(s) ||
-        e.note.toLowerCase().includes(s) ||
-        e.tags.some((t) => t.toLowerCase().includes(s)) ||
-        e.collection.toLowerCase().includes(s),
+        fuzzyMatch(s, e.title) ||
+        fuzzyMatch(s, e.note) ||
+        e.tags.some((t) => fuzzyMatch(s, t)) ||
+        fuzzyMatch(s, e.collection) ||
+        fuzzyMatch(s, e.place) ||
+        fuzzyMatch(s, e.mood),
     );
   }, [q, entries]);
 
@@ -158,6 +170,11 @@ function TimelinePage() {
       map.get(e.date)!.push(e);
     }
     return Array.from(map.entries());
+  }, [filtered]);
+
+  // Refresh ScrollTrigger heights when filtered entries list changes
+  useEffect(() => {
+    ScrollTrigger.refresh();
   }, [filtered]);
 
   const handleDeleteEntry = (entryId: string) => {
@@ -430,11 +447,23 @@ function TimelinePage() {
               {/* Photo */}
               {activeEntry.photoDataUrl && (
                 <div className="relative">
-                  <img
-                    src={activeEntry.photoDataUrl}
-                    alt=""
-                    className="w-full max-h-[350px] object-cover rounded-2xl border-2 border-ink/85 shadow-sm"
-                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setImagePreview({
+                        src: activeEntry.photoDataUrl!,
+                        title: activeEntry.title,
+                      })
+                    }
+                    className="block w-full cursor-zoom-in"
+                    aria-label="Enlarge image"
+                  >
+                    <img
+                      src={activeEntry.photoDataUrl}
+                      alt=""
+                      className="w-full max-h-[350px] object-cover rounded-2xl border-2 border-ink/85 shadow-sm"
+                    />
+                  </button>
                 </div>
               )}
 
@@ -577,7 +606,68 @@ function TimelinePage() {
           </div>
         </div>
       )}
+      {/* Immersive Image Zoom Modal Overlay */}
+      {imagePreview && (
+        <div className="fixed inset-0 z-[140] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
+          <button
+            type="button"
+            onClick={() => setImagePreview(null)}
+            className="absolute inset-0 cursor-zoom-out"
+            aria-label="Close enlarged image"
+          />
+          <div className="relative max-h-[90vh] w-full max-w-5xl">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="truncate font-display text-2xl text-paper">
+                {imagePreview.title}
+              </p>
+              <div className="flex shrink-0 items-center gap-2">
+                <a
+                  href={imagePreview.src}
+                  download={`${imagePreview.title || "momentstash-image"}.jpg`}
+                  className="inline-flex h-10 items-center gap-2 rounded-full border-2 border-paper bg-paper px-4 font-hand text-lg text-ink shadow-[2px_2px_0_var(--color-ink)]"
+                >
+                  <Download className="h-4 w-4" /> Download
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setImagePreview(null)}
+                  className="grid h-10 w-10 place-items-center rounded-full border-2 border-paper bg-paper font-hand text-xl text-ink cursor-pointer"
+                  aria-label="Close enlarged image"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <img
+              src={imagePreview.src}
+              alt=""
+              className="mx-auto max-h-[calc(90vh-4rem)] max-w-full rounded-2xl border-2 border-paper object-contain shadow-[var(--shadow-lift)]"
+            />
+          </div>
+        </div>
+      )}
     </main>
+  );
+}
+
+function fuzzyMatch(query: string, target: string | undefined | null): boolean {
+  if (!target) return false;
+  const qStr = query.toLowerCase().trim();
+  if (!qStr) return false;
+
+  // Direct includes check as a fast path
+  const tStr = target.toLowerCase().trim();
+  if (tStr.includes(qStr) || qStr.includes(tStr)) return true;
+
+  // Split into word tokens
+  const qWords = qStr.split(/[\s,._#\-:()]+/).filter(Boolean);
+  const tWords = tStr.split(/[\s,._#\-:()]+/).filter(Boolean);
+
+  if (qWords.length === 0 || tWords.length === 0) return false;
+
+  // Check if any query word token matches any target word token (substring or reverse substring)
+  return qWords.some(qw => 
+    tWords.some(tw => tw.includes(qw) || qw.includes(tw))
   );
 }
 

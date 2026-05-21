@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { addEntry, uid, type Entry, loadEntries } from "@/lib/entries";
 import { WashiTape } from "@/components/WashiTape";
 import {
@@ -23,19 +23,34 @@ export const Route = createFileRoute("/_app/create")({
   component: CreatePage,
 });
 
-const MOODS = [
-  "☕",
-  "🌸",
-  "🌇",
-  "🥐",
-  "📖",
-  "🌿",
-  "✨",
-  "🧺",
-  "🌧️",
-  "🍋",
-  "💌",
-  "🎶",
+const MOOD_CATEGORIES = [
+  {
+    name: "Cozy & Quiet",
+    items: [
+      { emoji: "☕", label: "warm brew / cozy start" },
+      { emoji: "📖", label: "lost in a book / slow learning" },
+      { emoji: "💌", label: "tender words / keeping in touch" },
+      { emoji: "🎶", label: "rhythm & melodies" },
+    ]
+  },
+  {
+    name: "Nature & Magic",
+    items: [
+      { emoji: "🌿", label: "fresh greenery / peaceful path" },
+      { emoji: "🌸", label: "blossoming joy / lovely details" },
+      { emoji: "🌇", label: "golden hour / sunset thoughts" },
+      { emoji: "✨", label: "tiny magic / beautiful wonder" },
+    ]
+  },
+  {
+    name: "Flavors & Weather",
+    items: [
+      { emoji: "🥐", label: "delicious pastry / morning treats" },
+      { emoji: "🧺", label: "outdoor picnic / simple escape" },
+      { emoji: "🍋", label: "tangy & bright / refreshing ideas" },
+      { emoji: "🌧️", label: "gentle rain / introspective mood" },
+    ]
+  }
 ];
 const TAPES = ["pink", "mint", "lavender", "yellow"] as const;
 const SUGGESTED = [
@@ -53,10 +68,11 @@ function CreatePage() {
 
   const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
-  const [mood, setMood] = useState(MOODS[0]);
+  const [mood, setMood] = useState("☕");
   const [collection, setCollection] = useState("");
   const [existingShelves, setExistingShelves] = useState<string[]>([]);
   const [tagsRaw, setTagsRaw] = useState("");
+  const [allUsedTags, setAllUsedTags] = useState<string[]>([]);
   const [place, setPlace] = useState("");
   const [tape, setTape] = useState<(typeof TAPES)[number]>("yellow");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -81,7 +97,43 @@ function CreatePage() {
       new Set([...custom, ...entries.map((e) => e.collection).filter(Boolean)]),
     );
     setExistingShelves(merged.length > 0 ? merged : SUGGESTED);
+
+    // Load unique tags from entries
+    const tagsSet = new Set<string>();
+    entries.forEach(e => {
+      if (e.tags) {
+        e.tags.forEach(t => tagsSet.add(t.trim().toLowerCase()));
+      }
+    });
+    setAllUsedTags(Array.from(tagsSet));
   }, []);
+
+  const activeQuery = useMemo(() => {
+    const parts = tagsRaw.split(/[,\s#]+/);
+    return parts[parts.length - 1]?.trim().toLowerCase() || "";
+  }, [tagsRaw]);
+
+  const suggestions = useMemo(() => {
+    const currentTags = tagsRaw.split(/[,\s#]+/).map(t => t.trim().toLowerCase()).filter(Boolean);
+    if (!activeQuery) {
+      return allUsedTags
+        .filter(t => !currentTags.includes(t))
+        .slice(0, 5);
+    }
+    return allUsedTags
+      .filter(t => t.includes(activeQuery) && !currentTags.includes(t))
+      .slice(0, 5);
+  }, [allUsedTags, tagsRaw, activeQuery]);
+
+  const handleAddTag = (tag: string) => {
+    const cleanParts = tagsRaw.split(/[,\s#]+/).map(t => t.trim()).filter(Boolean);
+    if (activeQuery) {
+      cleanParts[cleanParts.length - 1] = tag;
+    } else {
+      cleanParts.push(tag);
+    }
+    setTagsRaw(cleanParts.join(", ") + ", ");
+  };
 
   const onPickPhoto = (file: File | undefined) => {
     if (!file) return;
@@ -265,21 +317,34 @@ function CreatePage() {
           </div>
 
           <Field label="mood">
-            <div className="flex flex-wrap gap-2">
-              {MOODS.map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setMood(m)}
-                  className={[
-                    "h-11 w-11 grid place-items-center rounded-full border-2 text-2xl transition-all",
-                    mood === m
-                      ? "border-ink bg-accent shadow-[2px_2px_0_var(--color-ink)]"
-                      : "border-ink/40 bg-paper hover:border-ink",
-                  ].join(" ")}
-                >
-                  {m}
-                </button>
+            <div className="space-y-4">
+              {MOOD_CATEGORIES.map((cat) => (
+                <div key={cat.name} className="space-y-1.5">
+                  <span className="block font-hand text-lg text-ink-soft italic">{cat.name}</span>
+                  <div className="flex flex-wrap gap-2">
+                    {cat.items.map((item) => (
+                      <div key={item.emoji} className="relative group">
+                        <button
+                          type="button"
+                          onClick={() => setMood(item.emoji)}
+                          className={[
+                            "h-11 w-11 grid place-items-center rounded-full border-2 text-2xl transition-all cursor-pointer",
+                            mood === item.emoji
+                              ? "border-ink bg-accent shadow-[2px_2px_0_var(--color-ink)]"
+                              : "border-ink/40 bg-paper hover:border-ink",
+                          ].join(" ")}
+                        >
+                          {item.emoji}
+                        </button>
+                        {/* Custom Speech-bubble Tooltip */}
+                        <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-ink px-2.5 py-1 text-xs font-accent text-paper opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 uppercase tracking-wider">
+                          {item.label}
+                          <div className="absolute top-full left-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-0.5 rotate-45 bg-ink" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </Field>
@@ -383,12 +448,29 @@ function CreatePage() {
           </Field>
 
           <Field label="tags">
-            <input
-              value={tagsRaw}
-              onChange={(e) => setTagsRaw(e.target.value)}
-              placeholder="coffee, slow, #morning"
-              className="input-line"
-            />
+            <div className="space-y-2">
+              <input
+                value={tagsRaw}
+                onChange={(e) => setTagsRaw(e.target.value)}
+                placeholder="coffee, slow, #morning"
+                className="input-line"
+              />
+              {suggestions.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  <span className="font-accent text-[10px] uppercase tracking-wider text-ink-soft self-center mr-1">Suggest:</span>
+                  {suggestions.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => handleAddTag(tag)}
+                      className="font-hand text-base px-2.5 py-0.5 rounded-full border border-ink/30 bg-paper hover:bg-accent/40 hover:border-ink transition-colors cursor-pointer text-ink-soft hover:text-ink"
+                    >
+                      #{tag}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </Field>
 
           <Field label="tape color">

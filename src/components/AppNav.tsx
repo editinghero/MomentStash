@@ -10,6 +10,7 @@ import {
   MapPin,
   Settings,
   LogOut,
+  Download,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { WashiTape } from "@/components/WashiTape";
@@ -39,6 +40,11 @@ export function AppNav() {
   const [q, setQ] = useState("");
   const [entries, setEntries] = useState<Entry[]>([]);
   const [activeEntry, setActiveEntry] = useState<Entry | null>(null);
+  const [activeDate, setActiveDate] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<{
+    src: string;
+    title: string;
+  } | null>(null);
 
   // Load entries when search is opened
   useEffect(() => {
@@ -47,16 +53,26 @@ export function AppNav() {
     }
   }, [searchOpen]);
 
+  const matchedDate = useMemo(() => {
+    return parseSearchDate(q);
+  }, [q]);
+
+  const dateEntries = useMemo(() => {
+    if (!activeDate) return [];
+    return entries.filter(e => e.date === activeDate);
+  }, [activeDate, entries]);
+
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return [];
     return entries.filter(
       (e) =>
-        e.title.toLowerCase().includes(s) ||
-        e.note.toLowerCase().includes(s) ||
-        e.tags.some((t) => t.toLowerCase().includes(s)) ||
-        e.collection.toLowerCase().includes(s) ||
-        (e.place && e.place.toLowerCase().includes(s)),
+        fuzzyMatch(s, e.title) ||
+        fuzzyMatch(s, e.note) ||
+        e.tags.some((t) => fuzzyMatch(s, t)) ||
+        fuzzyMatch(s, e.collection) ||
+        fuzzyMatch(s, e.place) ||
+        fuzzyMatch(s, e.mood),
     );
   }, [q, entries]);
 
@@ -64,6 +80,7 @@ export function AppNav() {
     setSearchOpen(false);
     setQ("");
     setActiveEntry(null);
+    setActiveDate(null);
   };
 
   return (
@@ -128,7 +145,8 @@ export function AppNav() {
       <div className="md:hidden fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-3 pointer-events-none">
         <nav className="max-w-[calc(100vw-1.5rem)] pointer-events-auto">
           <ul className="flex items-end gap-1.5 rounded-full border-2 border-ink bg-paper/95 px-2 py-2 shadow-[4px_4px_0_var(--color-ink)] backdrop-blur-md">
-            {items.map(({ to, label, icon: Icon, accent }) => {
+            {/* 1. Standard items except the accent one */}
+            {items.filter(item => !item.accent).map(({ to, label, icon: Icon }) => {
               const active = path === to;
               return (
                 <li key={to}>
@@ -136,20 +154,10 @@ export function AppNav() {
                     to={to}
                     className={[
                       "group flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-full px-2.5 py-1.5 transition-all",
-                      accent
-                        ? "bg-primary text-primary-foreground border-2 border-ink -mt-4 shadow-[2px_2px_0_var(--color-ink)] hover:-translate-y-0.5"
-                        : active
-                          ? "bg-accent text-ink"
-                          : "text-ink-soft hover:text-ink",
+                      active
+                        ? "bg-accent text-ink"
+                        : "text-ink-soft hover:text-ink",
                     ].join(" ")}
-                    style={
-                      accent
-                        ? {
-                            borderRadius:
-                              "22px 18px 24px 16px / 18px 22px 16px 24px",
-                          }
-                        : undefined
-                    }
                   >
                     <Icon className="h-4 w-4" />
                     <span className="font-hand text-xs leading-none">
@@ -159,16 +167,39 @@ export function AppNav() {
                 </li>
               );
             })}
+            {/* 2. Search Item */}
             <li>
               <button
                 onClick={() => setSearchOpen(true)}
-                className="group flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-full px-2.5 py-1.5 text-ink-soft transition-all hover:bg-accent hover:text-ink"
+                className="group flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-full px-2.5 py-1.5 text-ink-soft transition-all hover:bg-accent hover:text-ink cursor-pointer"
                 aria-label="Search"
               >
                 <Search className="h-4 w-4" />
                 <span className="font-hand text-xs leading-none">search</span>
               </button>
             </li>
+            {/* 3. Accent Item (+) at the very end */}
+            {items.filter(item => item.accent).map(({ to, label, icon: Icon }) => {
+              return (
+                <li key={to}>
+                  <Link
+                    to={to}
+                    className={[
+                      "group flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-full px-2.5 py-1.5 transition-all",
+                      "bg-primary text-primary-foreground border-2 border-ink -mt-4 shadow-[2px_2px_0_var(--color-ink)] hover:-translate-y-0.5",
+                    ].join(" ")}
+                    style={{
+                      borderRadius: "22px 18px 24px 16px / 18px 22px 16px 24px",
+                    }}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span className="font-hand text-xs leading-none">
+                      {label}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </nav>
       </div>
@@ -226,7 +257,7 @@ export function AppNav() {
                     type to search your vault... ✿
                   </p>
                 </div>
-              ) : filtered.length === 0 ? (
+              ) : (filtered.length === 0 && !matchedDate) ? (
                 <div className="text-center py-10">
                   <p className="font-hand text-2xl text-ink-soft">
                     nothing fits that memory ✿
@@ -234,6 +265,26 @@ export function AppNav() {
                 </div>
               ) : (
                 <ul className="space-y-3">
+                  {matchedDate && (
+                    <li>
+                      <button
+                        onClick={() => {
+                          setActiveDate(matchedDate);
+                        }}
+                        className="w-full text-left p-4 rounded-xl border-2 border-dashed border-primary bg-primary-soft/10 hover:bg-primary-soft/20 transition-all flex items-center gap-3 cursor-pointer shadow-sm group"
+                      >
+                        <span className="text-3xl leading-none">📅</span>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-display text-lg text-primary font-bold group-hover:underline">
+                            Go to Day: {new Date(matchedDate + "T00:00").toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                          </h4>
+                          <p className="font-hand text-base text-ink-soft">
+                            View all entries folded on this date
+                          </p>
+                        </div>
+                      </button>
+                    </li>
+                  )}
                   {filtered.map((e) => (
                     <li key={e.id}>
                       <button
@@ -329,11 +380,23 @@ export function AppNav() {
               {/* Photo */}
               {activeEntry.photoDataUrl && (
                 <div className="relative">
-                  <img
-                    src={activeEntry.photoDataUrl}
-                    alt=""
-                    className="w-full max-h-[350px] object-cover rounded-2xl border-2 border-ink/85 shadow-sm"
-                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setImagePreview({
+                        src: activeEntry.photoDataUrl!,
+                        title: activeEntry.title,
+                      })
+                    }
+                    className="block w-full cursor-zoom-in"
+                    aria-label="Enlarge image"
+                  >
+                    <img
+                      src={activeEntry.photoDataUrl}
+                      alt=""
+                      className="w-full max-h-[350px] object-cover rounded-2xl border-2 border-ink/85 shadow-sm"
+                    />
+                  </button>
                 </div>
               )}
 
@@ -361,6 +424,135 @@ export function AppNav() {
           </div>
         </div>
       )}
+      {/* 5. UNIVERSAL IMAGE ZOOM PORTAL */}
+      {imagePreview && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
+          <button
+            type="button"
+            onClick={() => setImagePreview(null)}
+            className="absolute inset-0 cursor-zoom-out"
+            aria-label="Close enlarged image"
+          />
+          <div className="relative max-h-[90vh] w-full max-w-5xl">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="truncate font-display text-2xl text-paper">
+                {imagePreview.title}
+              </p>
+              <div className="flex shrink-0 items-center gap-2">
+                <a
+                  href={imagePreview.src}
+                  download={`${imagePreview.title || "momentstash-image"}.jpg`}
+                  className="inline-flex h-10 items-center gap-2 rounded-full border-2 border-paper bg-paper px-4 font-hand text-lg text-ink shadow-[2px_2px_0_var(--color-ink)]"
+                >
+                  <Download className="h-4 w-4" /> Download
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setImagePreview(null)}
+                  className="grid h-10 w-10 place-items-center rounded-full border-2 border-paper bg-paper font-hand text-xl text-ink cursor-pointer"
+                  aria-label="Close enlarged image"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <img
+              src={imagePreview.src}
+              alt=""
+              className="mx-auto max-h-[calc(90vh-4rem)] max-w-full rounded-2xl border-2 border-paper object-contain shadow-[var(--shadow-lift)]"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* 6. IMMERSIVE DATE DETAIL MODAL */}
+      {activeDate && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 animate-fade-in">
+          <div
+            onClick={() => setActiveDate(null)}
+            className="absolute inset-0 bg-black/65 backdrop-blur-md transition-opacity"
+          />
+          <div className="relative w-full max-w-2xl paper-card rounded-[32px] border-2 border-ink p-6 md:p-8 shadow-[var(--shadow-lift)] max-h-[85vh] flex flex-col animate-wobble-in bg-paper">
+            <WashiTape
+              color="mint"
+              rotate={-3}
+              width="6rem"
+              className="absolute -top-3 left-10 pointer-events-none"
+            />
+            <button
+              onClick={() => setActiveDate(null)}
+              className="absolute top-4 right-4 h-8 w-8 grid place-items-center rounded-full border-2 border-ink bg-paper text-ink hover:bg-accent cursor-pointer transition-colors font-hand text-xl z-20"
+            >
+              ✕
+            </button>
+
+            <div className="mb-4">
+              <span className="font-accent text-xs uppercase tracking-[0.2em] text-ink-soft">memories on</span>
+              <h3 className="font-display text-2xl md:text-3xl text-ink font-bold leading-tight">
+                {new Date(activeDate + "T00:00").toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+              </h3>
+            </div>
+
+            <div className="flex-1 overflow-y-auto subtle-scroll pr-2 space-y-4 min-h-0">
+              {dateEntries.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="font-hand text-2xl text-ink-soft italic">
+                    No memories folded on this day yet ✿
+                  </p>
+                  <Link
+                    to="/create"
+                    onClick={() => {
+                      setActiveDate(null);
+                      handleCloseSearch();
+                    }}
+                    className="inline-block mt-4"
+                  >
+                    <button className="font-hand text-xl px-5 py-2 border-2 border-ink rounded-full bg-accent hover:bg-accent/80 transition-all cursor-pointer shadow-[2px_2px_0_var(--color-ink)] font-bold">
+                      Tuck one in +
+                    </button>
+                  </Link>
+                </div>
+              ) : (
+                <ul className="space-y-4">
+                  {dateEntries.map((e) => (
+                    <li key={e.id}>
+                      <button
+                        onClick={() => {
+                          setActiveEntry(e);
+                        }}
+                        className="w-full text-left p-5 rounded-2xl border-2 border-ink bg-paper-deep/15 hover:bg-accent/30 transition-all flex flex-col md:flex-row gap-4 cursor-pointer"
+                      >
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <span className="text-3xl leading-none shrink-0">{e.mood}</span>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-display text-xl text-ink font-bold leading-tight truncate">
+                              {e.title}
+                            </h4>
+                            <p className="font-accent text-[10px] uppercase tracking-wider text-ink-soft mt-1">
+                              {e.collection || "Unsorted"}
+                              {e.place && ` · ${e.place}`}
+                            </p>
+                            <p className="font-body text-ink-soft text-base mt-2 line-clamp-3 leading-relaxed">
+                              {e.note}
+                            </p>
+                          </div>
+                        </div>
+                        {e.photoDataUrl && (
+                          <img
+                            src={e.photoDataUrl}
+                            alt=""
+                            className="w-full md:w-32 h-32 object-cover rounded-xl border border-ink/40 shrink-0"
+                          />
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -371,4 +563,70 @@ function todayISO() {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+function parseSearchDate(q: string): string | null {
+  const s = q.trim().toLowerCase();
+  if (!s) return null;
+
+  const today = new Date();
+  if (s === "today") {
+    return today.toISOString().slice(0, 10);
+  }
+  if (s === "yesterday") {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().slice(0, 10);
+  }
+  if (s === "tomorrow") {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
+  }
+
+  // Check if it's YYYY-MM-DD
+  const yyyymmdd = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+  if (yyyymmdd) {
+    const [_, y, m, d] = yyyymmdd;
+    return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  }
+
+  // Check if it's MM-DD or MM/DD (assume current year)
+  const mmdd = s.match(/^(\d{1,2})[-/](\d{1,2})$/);
+  if (mmdd) {
+    const [_, m, d] = mmdd;
+    const y = today.getFullYear();
+    return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  }
+
+  // Try standard Date.parse for strings like "may 21" or "21 may"
+  if (/^[a-zA-Z]+ \d{1,2}(, \d{4})?$/.test(s) || /^\d{1,2} [a-zA-Z]+(, \d{4})?$/.test(s)) {
+    const parsed = Date.parse(s);
+    if (!isNaN(parsed)) {
+      return new Date(parsed).toISOString().slice(0, 10);
+    }
+  }
+
+  return null;
+}
+
+function fuzzyMatch(query: string, target: string | undefined | null): boolean {
+  if (!target) return false;
+  const qStr = query.toLowerCase().trim();
+  if (!qStr) return false;
+
+  // Direct includes check as a fast path
+  const tStr = target.toLowerCase().trim();
+  if (tStr.includes(qStr) || qStr.includes(tStr)) return true;
+
+  // Split into word tokens
+  const qWords = qStr.split(/[\s,._#\-:()]+/).filter(Boolean);
+  const tWords = tStr.split(/[\s,._#\-:()]+/).filter(Boolean);
+
+  if (qWords.length === 0 || tWords.length === 0) return false;
+
+  // Check if any query word token matches any target word token (substring or reverse substring)
+  return qWords.some(qw => 
+    tWords.some(tw => tw.includes(qw) || qw.includes(tw))
+  );
 }

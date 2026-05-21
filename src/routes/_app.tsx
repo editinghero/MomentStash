@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { AppNav } from "@/components/AppNav";
+import { Toaster } from "@/components/ui/sonner";
 
 export const Route = createFileRoute("/_app")({
   component: AppLayout,
@@ -27,6 +28,7 @@ function AppLayout() {
     <div className="min-h-screen bg-transparent pt-0 md:pt-16">
       <Outlet />
       <AppNav />
+      <Toaster />
     </div>
   );
 }
