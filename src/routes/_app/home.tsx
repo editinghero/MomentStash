@@ -175,6 +175,111 @@ function HomePage() {
   const [exportEndDate, setExportEndDate] = useState("");
   const [isImporting, setIsImporting] = useState(false);
 
+  const [shelves, setShelves] = useState<string[]>([]);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    targetId: string;
+  } | null>(null);
+
+  /* ── Scrapbook Dialog State ── */
+  const [dialog, setDialog] = useState<{
+    kind: "confirm";
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
+
+  useEffect(() => {
+    // Load dynamic shelves
+    const stored = JSON.parse(
+      localStorage.getItem("momentstash_custom_shelves") || "[]",
+    ) as string[];
+    const activeShelves = loadEntries()
+      .map((e) => e.collection)
+      .filter(Boolean);
+    const merged = Array.from(new Set([...stored, ...activeShelves]));
+    setShelves(merged);
+
+    const closeMenu = () => setContextMenu(null);
+    window.addEventListener("click", closeMenu);
+    window.addEventListener("scroll", closeMenu, { passive: true });
+    return () => {
+      window.removeEventListener("click", closeMenu);
+      window.removeEventListener("scroll", closeMenu);
+    };
+  }, [entries]);
+
+  const handleDeleteEntry = (entryId: string) => {
+    setDialog({
+      kind: "confirm",
+      title: "Discard Memory?",
+      message:
+        "This fold will be gone forever. Are you sure you want to let it go?",
+      onConfirm: () => {
+        const allEntries = loadEntries();
+        const updatedEntries = allEntries.filter((e) => e.id !== entryId);
+        localStorage.setItem(
+          "momentstash_entries",
+          JSON.stringify(updatedEntries),
+        );
+        setEntries(updatedEntries);
+        setActiveEntry(null);
+        setDialog(null);
+      },
+    });
+  };
+
+  const handleMoveEntry = (entryId: string, newShelf: string) => {
+    const allEntries = loadEntries();
+    const updatedEntries = allEntries.map((e) => {
+      if (e.id === entryId) {
+        return { ...e, collection: newShelf.trim() };
+      }
+      return e;
+    });
+    localStorage.setItem("momentstash_entries", JSON.stringify(updatedEntries));
+    setEntries(updatedEntries);
+
+    // Update shelves if moved to a new one
+    if (newShelf.trim() && !shelves.includes(newShelf.trim())) {
+      const updatedShelves = [...shelves, newShelf.trim()];
+      setShelves(updatedShelves);
+      const custom = JSON.parse(
+        localStorage.getItem("momentstash_custom_shelves") || "[]",
+      ) as string[];
+      if (!custom.includes(newShelf.trim())) {
+        localStorage.setItem(
+          "momentstash_custom_shelves",
+          JSON.stringify([...custom, newShelf.trim()]),
+        );
+      }
+    }
+  };
+
+  const isNearRight = useMemo(() => {
+    if (!contextMenu) return false;
+    return window.innerWidth - contextMenu.x < 240;
+  }, [contextMenu]);
+
+  const menuY = useMemo(() => {
+    if (!contextMenu) return 0;
+    const menuHeight = 160;
+    if (window.innerHeight - contextMenu.y < menuHeight) {
+      return Math.max(10, contextMenu.y - menuHeight);
+    }
+    return contextMenu.y;
+  }, [contextMenu]);
+
+  const menuX = useMemo(() => {
+    if (!contextMenu) return 0;
+    const menuWidth = 180;
+    if (window.innerWidth - contextMenu.x < menuWidth) {
+      return Math.max(10, contextMenu.x - menuWidth);
+    }
+    return contextMenu.x;
+  }, [contextMenu]);
+
   const handleExportPDF = () => {
     const all = loadEntries();
     let filtered = [...all].sort((a, b) => b.date.localeCompare(a.date));
@@ -239,14 +344,14 @@ function HomePage() {
                 <h3 class="entry-title">${e.title}</h3>
                 <div class="entry-meta">
                   <span class="entry-date">${dateStr}</span>
-                  \${e.place ? \`<span class="entry-place">· 📍 \${e.place}</span>\` : ""}
-                  \${e.collection ? \`<span class="entry-shelf">· 📁 \${e.collection}</span>\` : ""}
+                  ${e.place ? `<span class="entry-place">· 📍 ${e.place}</span>` : ""}
+                  ${e.collection ? `<span class="entry-shelf">· 📁 ${e.collection}</span>` : ""}
                 </div>
               </div>
             </div>
-            \${photoHtml}
-            <p class="entry-note">\${e.note.replace(/\\n/g, "<br/>")}</p>
-            \${tagsHtml}
+            ${photoHtml}
+            <p class="entry-note">${e.note.replace(/\n/g, "<br/>")}</p>
+            ${tagsHtml}
           </div>
         `;
       })
@@ -256,7 +361,7 @@ function HomePage() {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>\${titleStr}</title>
+          <title>${titleStr}</title>
           <link rel="preconnect" href="https://fonts.googleapis.com">
           <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
           <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Playfair+Display:ital,wght@0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -397,7 +502,7 @@ function HomePage() {
             <h1 class="scrapbook-title">MomentStash</h1>
             <p class="scrapbook-subtitle">A collection of quiet wonders</p>
             <div class="entries-list">
-              \${entriesHtml}
+              ${entriesHtml}
             </div>
           </div>
           <script>
@@ -444,7 +549,7 @@ function HomePage() {
             const base64Data = parts[1];
             const mime = header.split(";")[0].split(":")[1] || "image/jpeg";
             const ext = mime.split("/")[1] || "jpg";
-            const imagePath = `images/\${entryClone.id}.\${ext}`;
+            const imagePath = `images/${entryClone.id}.${ext}`;
 
             zip.file(imagePath, base64Data, { base64: true });
             entryClone.photoDataUrl = imagePath;
@@ -462,7 +567,7 @@ function HomePage() {
       const a = document.createElement("a");
       const timestamp = new Date().toISOString().slice(0, 10);
       a.href = url;
-      a.download = `momentstash-backup-\${timestamp}.zip`;
+      a.download = `momentstash-backup-${timestamp}.zip`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -512,7 +617,7 @@ function HomePage() {
                 const base64 = await imgFile.async("base64");
                 const ext = entryClone.photoDataUrl.split(".").pop() || "jpg";
                 const mime = ext === "png" ? "image/png" : "image/jpeg";
-                entryClone.photoDataUrl = `data:\${mime};base64,\${base64}`;
+                entryClone.photoDataUrl = `data:${mime};base64,${base64}`;
               }
             } catch (err) {
               console.error("Failed to restore photo for entry:", entryClone.id, err);
@@ -542,13 +647,13 @@ function HomePage() {
       setEntries(merged);
 
       toast.success(
-        `Scrapbook restored! Added \${addedCount} and updated \${updatedCount} memories. ✿`,
+        `Scrapbook restored! Added ${addedCount} and updated ${updatedCount} memories. ✿`,
         { id: "zip-import" }
       );
     } catch (err: any) {
       console.error("ZIP Import failed:", err);
       toast.error(
-        `Failed to import: \${err.message || "Invalid or corrupt backup parcel."} ✿`,
+        `Failed to import: ${err.message || "Invalid or corrupt backup parcel."} ✿`,
         { id: "zip-import" }
       );
     } finally {
@@ -723,7 +828,19 @@ function HomePage() {
           ) : (
             <div className="grid max-w-3xl grid-cols-2 gap-6 sm:grid-cols-3 md:gap-8">
               {spread.map((e, i) => (
-                <div key={e.id} className="polaroid-item flex justify-center">
+                <div
+                  key={e.id}
+                  className="polaroid-item flex justify-center"
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setContextMenu({
+                      x: event.clientX,
+                      y: event.clientY,
+                      targetId: e.id,
+                    });
+                  }}
+                >
                   <Polaroid
                     src={
                       e.photoDataUrl ||
@@ -749,6 +866,15 @@ function HomePage() {
             <div
               className="featured-card relative paper-card rounded-[32px] border-2 border-ink/80 overflow-hidden cursor-pointer hover:shadow-[var(--shadow-lift)] transition-all duration-300"
               onClick={() => setActiveEntry(featured)}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setContextMenu({
+                  x: event.clientX,
+                  y: event.clientY,
+                  targetId: featured.id,
+                });
+              }}
             >
               <WashiTape
                 color="lavender"
@@ -1222,6 +1348,121 @@ function HomePage() {
               alt=""
               className="mx-auto max-h-[calc(90vh-4rem)] max-w-full rounded-2xl border-2 border-paper object-contain shadow-[var(--shadow-lift)]"
             />
+          </div>
+        </div>
+      )}
+
+      {/* Floating Scrapbook Custom Context Menu */}
+      {contextMenu && (
+        <div
+          className="fixed z-[150] bg-paper border-2 border-ink p-2 rounded-xl shadow-[var(--shadow-paper)] flex flex-col min-w-[170px] animate-fade-in"
+          style={{
+            top: menuY,
+            left: menuX,
+          }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <WashiTape
+            color="yellow"
+            rotate={-2}
+            width="3.5rem"
+            className="absolute -top-2.5 left-4 pointer-events-none"
+          />
+
+          <button
+            onClick={() => {
+              handleDeleteEntry(contextMenu.targetId);
+              setContextMenu(null);
+            }}
+            className="text-left font-hand text-lg hover:bg-accent/40 text-red-600 hover:text-red-700 px-3 py-1.5 rounded-lg transition-colors cursor-pointer w-full flex items-center gap-1.5"
+          >
+            <span>🗑</span> Delete Fold
+          </button>
+
+          {/* Submenu for moving to shelf */}
+          <div className="relative group/shelf">
+            <button className="text-left font-hand text-lg hover:bg-accent/40 text-ink px-3 py-1.5 rounded-lg transition-colors cursor-pointer w-full flex items-center justify-between gap-2">
+              <span>📁 Move to Shelf</span>
+              <span className="text-xs">➜</span>
+            </button>
+
+            <div
+              className={[
+                "absolute top-0 bg-paper border-2 border-ink p-2 rounded-xl shadow-[var(--shadow-paper)] flex flex-col min-w-[150px] hidden group-hover/shelf:block animate-fade-in",
+                isNearRight ? "right-full mr-1" : "left-full ml-1",
+              ].join(" ")}
+            >
+              <button
+                onClick={() => {
+                  handleMoveEntry(contextMenu.targetId, "");
+                  setContextMenu(null);
+                }}
+                className="text-left font-hand text-base hover:bg-accent/40 text-ink-soft hover:text-ink px-3 py-1 rounded-lg transition-colors cursor-pointer w-full"
+              >
+                ✿ Unsorted
+              </button>
+
+              {shelves.length > 0 && (
+                <div className="border-t border-dashed border-ink/20 my-1" />
+              )}
+
+              {shelves.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => {
+                    handleMoveEntry(contextMenu.targetId, s);
+                    setContextMenu(null);
+                  }}
+                  className="text-left font-hand text-base hover:bg-accent/40 text-ink-soft hover:text-ink px-3 py-1 rounded-lg transition-colors cursor-pointer w-full truncate"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Custom Scrapbook Confirm Dialog ── */}
+      {dialog && (
+        <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 animate-fade-in">
+          <div
+            onClick={() => setDialog(null)}
+            className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
+          />
+          <div className="relative w-full max-w-md paper-card rounded-[24px] border-2 border-ink p-6 md:p-8 shadow-[var(--shadow-lift)] bg-paper animate-wobble-in flex flex-col z-50">
+            <WashiTape
+              color="pink"
+              rotate={-2}
+              width="5rem"
+              className="absolute -top-3.5 left-12 pointer-events-none"
+            />
+            <h4 className="font-display text-2xl text-ink font-bold mb-3">
+              {dialog.title}
+            </h4>
+            <p className="font-hand text-xl text-ink-soft mb-5 leading-relaxed">
+              {dialog.message}
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setDialog(null)}
+                className="font-hand text-lg border-2 border-ink/40 px-5 py-1.5 rounded-full bg-paper text-ink-soft hover:bg-accent/30 cursor-pointer transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={dialog.onConfirm}
+                className="font-hand text-lg border-2 border-ink bg-primary px-6 py-1.5 rounded-full text-paper shadow-sm hover:shadow-md cursor-pointer transition-all hover:-translate-y-0.5 active:translate-y-0"
+              >
+                Confirm
+              </button>
+            </div>
           </div>
         </div>
       )}
