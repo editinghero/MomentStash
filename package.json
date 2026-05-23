@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build && mv dist/server/index.js dist/client/_worker.js",
+    "build": "vite build && npx esbuild dist/server/index.js --bundle --format=esm --outfile=dist/client/_worker.js --external:node:* --external:cloudflare:* --platform=node",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
