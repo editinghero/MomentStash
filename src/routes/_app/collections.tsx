@@ -639,7 +639,8 @@ function CollectionsPage() {
                         ].join(" ")}
                         style={{
                           transform: `rotate(${rotate}deg) ${isHovered ? "scale(1.04) translateY(-5px)" : "scale(1) translateY(0)"}`,
-                          transition: "transform 0.2s ease, border-width 0.1s ease, box-shadow 0.2s ease",
+                          transition:
+                            "transform 0.2s ease, border-width 0.1s ease, box-shadow 0.2s ease",
                         }}
                       >
                         <WashiTape

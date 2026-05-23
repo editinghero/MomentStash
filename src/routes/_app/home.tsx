@@ -309,12 +309,15 @@ function HomePage() {
 
     const entriesHtml = filtered
       .map((e) => {
-        const dateStr = new Date(e.date + "T00:00").toLocaleDateString(undefined, {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        });
+        const dateStr = new Date(e.date + "T00:00").toLocaleDateString(
+          undefined,
+          {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          },
+        );
 
         const tapeColors: Record<string, string> = {
           pink: "#ffccd5",
@@ -535,14 +538,19 @@ function HomePage() {
       return;
     }
 
-    toast.loading("Gathering your memories into a parcel...", { id: "zip-export" });
+    toast.loading("Gathering your memories into a parcel...", {
+      id: "zip-export",
+    });
 
     try {
       const JSZipLib = (await import("jszip")).default;
       const zip = new JSZipLib();
       const modifiedEntries = filtered.map((e) => {
         const entryClone = { ...e };
-        if (entryClone.photoDataUrl && entryClone.photoDataUrl.startsWith("data:")) {
+        if (
+          entryClone.photoDataUrl &&
+          entryClone.photoDataUrl.startsWith("data:")
+        ) {
           try {
             const parts = entryClone.photoDataUrl.split(",");
             const header = parts[0];
@@ -584,7 +592,9 @@ function HomePage() {
     }
   };
 
-  const handleImportZip = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportZip = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -594,7 +604,7 @@ function HomePage() {
     try {
       const JSZipLib = (await import("jszip")).default;
       const zip = await JSZipLib.loadAsync(file);
-      
+
       const jsonFile = zip.file("entries.json");
       if (!jsonFile) {
         throw new Error("Missing entries.json in the zip archive.");
@@ -610,7 +620,10 @@ function HomePage() {
       const restoredEntries = await Promise.all(
         imported.map(async (entry) => {
           const entryClone = { ...entry };
-          if (entryClone.photoDataUrl && entryClone.photoDataUrl.startsWith("images/")) {
+          if (
+            entryClone.photoDataUrl &&
+            entryClone.photoDataUrl.startsWith("images/")
+          ) {
             try {
               const imgFile = zip.file(entryClone.photoDataUrl);
               if (imgFile) {
@@ -620,11 +633,15 @@ function HomePage() {
                 entryClone.photoDataUrl = `data:${mime};base64,${base64}`;
               }
             } catch (err) {
-              console.error("Failed to restore photo for entry:", entryClone.id, err);
+              console.error(
+                "Failed to restore photo for entry:",
+                entryClone.id,
+                err,
+              );
             }
           }
           return entryClone;
-        })
+        }),
       );
 
       const current = loadEntries();
@@ -648,13 +665,13 @@ function HomePage() {
 
       toast.success(
         `Scrapbook restored! Added ${addedCount} and updated ${updatedCount} memories. ✿`,
-        { id: "zip-import" }
+        { id: "zip-import" },
       );
     } catch (err: any) {
       console.error("ZIP Import failed:", err);
       toast.error(
         `Failed to import: ${err.message || "Invalid or corrupt backup parcel."} ✿`,
-        { id: "zip-import" }
+        { id: "zip-import" },
       );
     } finally {
       setIsImporting(false);
@@ -1166,9 +1183,13 @@ function HomePage() {
                     </h4>
                     <p className="font-body text-xs text-ink-soft leading-tight">
                       {linkingGdrive ? (
-                        <span className="text-primary font-bold animate-pulse">Connecting to Drive...</span>
+                        <span className="text-primary font-bold animate-pulse">
+                          Connecting to Drive...
+                        </span>
                       ) : gdriveLinked ? (
-                        <span className="text-green-600 font-semibold">Linked to editi.stash@gmail.com</span>
+                        <span className="text-green-600 font-semibold">
+                          Linked to editi.stash@gmail.com
+                        </span>
                       ) : (
                         "Keep your journal synced in the cloud"
                       )}
@@ -1181,33 +1202,46 @@ function HomePage() {
                   onClick={() => {
                     if (gdriveLinked) {
                       setGdriveLinked(false);
-                      localStorage.setItem("momentstash_gdrive_linked", "false");
+                      localStorage.setItem(
+                        "momentstash_gdrive_linked",
+                        "false",
+                      );
                       toast.success("Disconnected Google Drive backup.");
                     } else {
                       setLinkingGdrive(true);
                       setTimeout(() => {
                         setLinkingGdrive(false);
                         setGdriveLinked(true);
-                        localStorage.setItem("momentstash_gdrive_linked", "true");
-                        toast.success("Successfully linked Google Drive! Future backups will sync here.");
+                        localStorage.setItem(
+                          "momentstash_gdrive_linked",
+                          "true",
+                        );
+                        toast.success(
+                          "Successfully linked Google Drive! Future backups will sync here.",
+                        );
                       }, 1200);
                     }
                   }}
                   className={[
                     "font-hand text-lg border-2 border-ink px-4 py-1 rounded-full cursor-pointer transition-all active:translate-y-0.5",
-                    gdriveLinked 
-                      ? "bg-paper text-red-600 hover:bg-red-50 border-ink/40" 
-                      : "bg-accent hover:bg-accent/80 text-ink shadow-[2px_2px_0_var(--color-ink)]"
+                    gdriveLinked
+                      ? "bg-paper text-red-600 hover:bg-red-50 border-ink/40"
+                      : "bg-accent hover:bg-accent/80 text-ink shadow-[2px_2px_0_var(--color-ink)]",
                   ].join(" ")}
                 >
-                  {linkingGdrive ? "Connecting..." : gdriveLinked ? "Unlink" : "Link Drive"}
+                  {linkingGdrive
+                    ? "Connecting..."
+                    : gdriveLinked
+                      ? "Unlink"
+                      : "Link Drive"}
                 </button>
               </div>
 
               {/* Backups & Scrapbook Exports */}
               <div className="rounded-2xl border-2 border-ink/80 bg-paper-deep/35 p-5 space-y-4">
                 <h3 className="font-display text-xl text-ink flex items-center gap-2 border-b border-dashed border-ink/30 pb-2">
-                  <Archive className="h-5 w-5 text-primary" /> Backups & Scrapbooks
+                  <Archive className="h-5 w-5 text-primary" /> Backups &
+                  Scrapbooks
                 </h3>
 
                 {/* Optional Date Range Fields */}
@@ -1217,7 +1251,9 @@ function HomePage() {
                   </span>
                   <div className="grid grid-cols-2 gap-3">
                     <label className="block">
-                      <span className="mb-1 block font-hand text-sm text-ink-soft">Start Date</span>
+                      <span className="mb-1 block font-hand text-sm text-ink-soft">
+                        Start Date
+                      </span>
                       <input
                         type="date"
                         value={exportStartDate}
@@ -1226,7 +1262,9 @@ function HomePage() {
                       />
                     </label>
                     <label className="block">
-                      <span className="mb-1 block font-hand text-sm text-ink-soft">End Date</span>
+                      <span className="mb-1 block font-hand text-sm text-ink-soft">
+                        End Date
+                      </span>
                       <input
                         type="date"
                         value={exportEndDate}
@@ -1272,7 +1310,9 @@ function HomePage() {
                     {/* JSON+Zip Import Trigger */}
                     <label className="font-hand text-lg border-2 border-ink rounded-full bg-paper hover:bg-accent/30 text-ink py-2 cursor-pointer shadow-[2px_2px_0_var(--color-ink)] active:translate-y-0.5 transition-all font-bold flex items-center justify-center gap-1.5 text-center">
                       <Upload className="h-4.5 w-4.5" />
-                      <span>{isImporting ? "Importing..." : "Restore Zip"}</span>
+                      <span>
+                        {isImporting ? "Importing..." : "Restore Zip"}
+                      </span>
                       <input
                         type="file"
                         accept=".zip"

@@ -5,7 +5,10 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function fuzzyMatch(query: string, target: string | undefined | null): boolean {
+export function fuzzyMatch(
+  query: string,
+  target: string | undefined | null,
+): boolean {
   if (!target) return false;
   const qStr = query.toLowerCase().trim();
   if (!qStr) return false;
@@ -21,8 +24,7 @@ export function fuzzyMatch(query: string, target: string | undefined | null): bo
   if (qWords.length === 0 || tWords.length === 0) return false;
 
   // Check if any query word token matches any target word token (substring or reverse substring)
-  return qWords.some(qw => 
-    tWords.some(tw => tw.includes(qw) || qw.includes(tw))
+  return qWords.some((qw) =>
+    tWords.some((tw) => tw.includes(qw) || qw.includes(tw)),
   );
 }
-

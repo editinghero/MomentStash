@@ -59,7 +59,7 @@ export function AppNav() {
 
   const dateEntries = useMemo(() => {
     if (!activeDate) return [];
-    return entries.filter(e => e.date === activeDate);
+    return entries.filter((e) => e.date === activeDate);
   }, [activeDate, entries]);
 
   const filtered = useMemo(() => {
@@ -146,27 +146,29 @@ export function AppNav() {
         <nav className="max-w-[calc(100vw-1.5rem)] pointer-events-auto">
           <ul className="flex items-end gap-1.5 rounded-full border-2 border-ink bg-paper/95 px-2 py-2 shadow-[4px_4px_0_var(--color-ink)] backdrop-blur-md">
             {/* 1. Standard items except the accent one */}
-            {items.filter(item => !item.accent).map(({ to, label, icon: Icon }) => {
-              const active = path === to;
-              return (
-                <li key={to}>
-                  <Link
-                    to={to}
-                    className={[
-                      "group flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-full px-2.5 py-1.5 transition-all",
-                      active
-                        ? "bg-accent text-ink"
-                        : "text-ink-soft hover:text-ink",
-                    ].join(" ")}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span className="font-hand text-xs leading-none">
-                      {label}
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
+            {items
+              .filter((item) => !item.accent)
+              .map(({ to, label, icon: Icon }) => {
+                const active = path === to;
+                return (
+                  <li key={to}>
+                    <Link
+                      to={to}
+                      className={[
+                        "group flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-full px-2.5 py-1.5 transition-all",
+                        active
+                          ? "bg-accent text-ink"
+                          : "text-ink-soft hover:text-ink",
+                      ].join(" ")}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="font-hand text-xs leading-none">
+                        {label}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
             {/* 2. Search Item */}
             <li>
               <button
@@ -179,27 +181,30 @@ export function AppNav() {
               </button>
             </li>
             {/* 3. Accent Item (+) at the very end */}
-            {items.filter(item => item.accent).map(({ to, label, icon: Icon }) => {
-              return (
-                <li key={to}>
-                  <Link
-                    to={to}
-                    className={[
-                      "group flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-full px-2.5 py-1.5 transition-all",
-                      "bg-primary text-primary-foreground border-2 border-ink -mt-4 shadow-[2px_2px_0_var(--color-ink)] hover:-translate-y-0.5",
-                    ].join(" ")}
-                    style={{
-                      borderRadius: "22px 18px 24px 16px / 18px 22px 16px 24px",
-                    }}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span className="font-hand text-xs leading-none">
-                      {label}
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
+            {items
+              .filter((item) => item.accent)
+              .map(({ to, label, icon: Icon }) => {
+                return (
+                  <li key={to}>
+                    <Link
+                      to={to}
+                      className={[
+                        "group flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-full px-2.5 py-1.5 transition-all",
+                        "bg-primary text-primary-foreground border-2 border-ink -mt-4 shadow-[2px_2px_0_var(--color-ink)] hover:-translate-y-0.5",
+                      ].join(" ")}
+                      style={{
+                        borderRadius:
+                          "22px 18px 24px 16px / 18px 22px 16px 24px",
+                      }}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="font-hand text-xs leading-none">
+                        {label}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
           </ul>
         </nav>
       </div>
@@ -257,7 +262,7 @@ export function AppNav() {
                     type to search your vault... ✿
                   </p>
                 </div>
-              ) : (filtered.length === 0 && !matchedDate) ? (
+              ) : filtered.length === 0 && !matchedDate ? (
                 <div className="text-center py-10">
                   <p className="font-hand text-2xl text-ink-soft">
                     nothing fits that memory ✿
@@ -276,7 +281,15 @@ export function AppNav() {
                         <span className="text-3xl leading-none">📅</span>
                         <div className="flex-1 min-w-0">
                           <h4 className="font-display text-lg text-primary font-bold group-hover:underline">
-                            Go to Day: {new Date(matchedDate + "T00:00").toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                            Go to Day:{" "}
+                            {new Date(
+                              matchedDate + "T00:00",
+                            ).toLocaleDateString(undefined, {
+                              weekday: "long",
+                              month: "long",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
                           </h4>
                           <p className="font-hand text-base text-ink-soft">
                             View all entries folded on this date
@@ -487,9 +500,16 @@ export function AppNav() {
             </button>
 
             <div className="mb-4">
-              <span className="font-accent text-xs uppercase tracking-[0.2em] text-ink-soft">memories on</span>
+              <span className="font-accent text-xs uppercase tracking-[0.2em] text-ink-soft">
+                memories on
+              </span>
               <h3 className="font-display text-2xl md:text-3xl text-ink font-bold leading-tight">
-                {new Date(activeDate + "T00:00").toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                {new Date(activeDate + "T00:00").toLocaleDateString(undefined, {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
               </h3>
             </div>
 
@@ -523,7 +543,9 @@ export function AppNav() {
                         className="w-full text-left p-5 rounded-2xl border-2 border-ink bg-paper-deep/15 hover:bg-accent/30 transition-all flex flex-col md:flex-row gap-4 cursor-pointer"
                       >
                         <div className="flex items-start gap-3 flex-1 min-w-0">
-                          <span className="text-3xl leading-none shrink-0">{e.mood}</span>
+                          <span className="text-3xl leading-none shrink-0">
+                            {e.mood}
+                          </span>
                           <div className="min-w-0 flex-1">
                             <h4 className="font-display text-xl text-ink font-bold leading-tight truncate">
                               {e.title}
@@ -600,7 +622,10 @@ function parseSearchDate(q: string): string | null {
   }
 
   // Try standard Date.parse for strings like "may 21" or "21 may"
-  if (/^[a-zA-Z]+ \d{1,2}(, \d{4})?$/.test(s) || /^\d{1,2} [a-zA-Z]+(, \d{4})?$/.test(s)) {
+  if (
+    /^[a-zA-Z]+ \d{1,2}(, \d{4})?$/.test(s) ||
+    /^\d{1,2} [a-zA-Z]+(, \d{4})?$/.test(s)
+  ) {
     const parsed = Date.parse(s);
     if (!isNaN(parsed)) {
       return new Date(parsed).toISOString().slice(0, 10);
@@ -626,7 +651,7 @@ function fuzzyMatch(query: string, target: string | undefined | null): boolean {
   if (qWords.length === 0 || tWords.length === 0) return false;
 
   // Check if any query word token matches any target word token (substring or reverse substring)
-  return qWords.some(qw => 
-    tWords.some(tw => tw.includes(qw) || qw.includes(tw))
+  return qWords.some((qw) =>
+    tWords.some((tw) => tw.includes(qw) || qw.includes(tw)),
   );
 }

@@ -12,7 +12,12 @@ const colorMap = {
   yellow: "bg-tape-yellow",
 };
 
-export function WashiTape({ color = "pink", rotate = 0, className = "", width = "8rem" }: WashiTapeProps) {
+export function WashiTape({
+  color = "pink",
+  rotate = 0,
+  className = "",
+  width = "8rem",
+}: WashiTapeProps) {
   return (
     <span
       className={`block h-7 ${colorMap[color]} mix-blend-multiply ${className}`}

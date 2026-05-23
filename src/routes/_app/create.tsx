@@ -31,7 +31,7 @@ const MOOD_CATEGORIES = [
       { emoji: "📖", label: "lost in a book / slow learning" },
       { emoji: "💌", label: "tender words / keeping in touch" },
       { emoji: "🎶", label: "rhythm & melodies" },
-    ]
+    ],
   },
   {
     name: "Nature & Magic",
@@ -40,7 +40,7 @@ const MOOD_CATEGORIES = [
       { emoji: "🌸", label: "blossoming joy / lovely details" },
       { emoji: "🌇", label: "golden hour / sunset thoughts" },
       { emoji: "✨", label: "tiny magic / beautiful wonder" },
-    ]
+    ],
   },
   {
     name: "Flavors & Weather",
@@ -49,8 +49,8 @@ const MOOD_CATEGORIES = [
       { emoji: "🧺", label: "outdoor picnic / simple escape" },
       { emoji: "🍋", label: "tangy & bright / refreshing ideas" },
       { emoji: "🌧️", label: "gentle rain / introspective mood" },
-    ]
-  }
+    ],
+  },
 ];
 const TAPES = ["pink", "mint", "lavender", "yellow"] as const;
 const SUGGESTED = [
@@ -100,9 +100,9 @@ function CreatePage() {
 
     // Load unique tags from entries
     const tagsSet = new Set<string>();
-    entries.forEach(e => {
+    entries.forEach((e) => {
       if (e.tags) {
-        e.tags.forEach(t => tagsSet.add(t.trim().toLowerCase()));
+        e.tags.forEach((t) => tagsSet.add(t.trim().toLowerCase()));
       }
     });
     setAllUsedTags(Array.from(tagsSet));
@@ -114,19 +114,23 @@ function CreatePage() {
   }, [tagsRaw]);
 
   const suggestions = useMemo(() => {
-    const currentTags = tagsRaw.split(/[,\s#]+/).map(t => t.trim().toLowerCase()).filter(Boolean);
+    const currentTags = tagsRaw
+      .split(/[,\s#]+/)
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean);
     if (!activeQuery) {
-      return allUsedTags
-        .filter(t => !currentTags.includes(t))
-        .slice(0, 5);
+      return allUsedTags.filter((t) => !currentTags.includes(t)).slice(0, 5);
     }
     return allUsedTags
-      .filter(t => t.includes(activeQuery) && !currentTags.includes(t))
+      .filter((t) => t.includes(activeQuery) && !currentTags.includes(t))
       .slice(0, 5);
   }, [allUsedTags, tagsRaw, activeQuery]);
 
   const handleAddTag = (tag: string) => {
-    const cleanParts = tagsRaw.split(/[,\s#]+/).map(t => t.trim()).filter(Boolean);
+    const cleanParts = tagsRaw
+      .split(/[,\s#]+/)
+      .map((t) => t.trim())
+      .filter(Boolean);
     if (activeQuery) {
       cleanParts[cleanParts.length - 1] = tag;
     } else {
@@ -320,7 +324,9 @@ function CreatePage() {
             <div className="space-y-4">
               {MOOD_CATEGORIES.map((cat) => (
                 <div key={cat.name} className="space-y-1.5">
-                  <span className="block font-hand text-lg text-ink-soft italic">{cat.name}</span>
+                  <span className="block font-hand text-lg text-ink-soft italic">
+                    {cat.name}
+                  </span>
                   <div className="flex flex-wrap gap-2">
                     {cat.items.map((item) => (
                       <div key={item.emoji} className="relative group">
@@ -457,7 +463,9 @@ function CreatePage() {
               />
               {suggestions.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 pt-1">
-                  <span className="font-accent text-[10px] uppercase tracking-wider text-ink-soft self-center mr-1">Suggest:</span>
+                  <span className="font-accent text-[10px] uppercase tracking-wider text-ink-soft self-center mr-1">
+                    Suggest:
+                  </span>
                   {suggestions.map((tag) => (
                     <button
                       key={tag}
