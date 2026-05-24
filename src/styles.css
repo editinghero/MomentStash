@@ -328,4 +328,17 @@
   .animate-wobble-in {
     animation: wobble-in 0.18s ease-out both;
   }
+
+  .collage-shape-1 {
+    border-radius: 25px 15px 25px 15px / 15px 25px 15px 25px;
+  }
+  .collage-shape-2 {
+    border-radius: 15px 25px 15px 25px / 25px 15px 25px 15px;
+  }
+  .collage-shape-3 {
+    border-radius: 20px 10px 20px 10px / 10px 20px 10px 20px;
+  }
+  .collage-shape-4 {
+    border-radius: 10px 20px 10px 20px / 20px 10px 20px 10px;
+  }
 }

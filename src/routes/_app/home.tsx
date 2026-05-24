@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
 import { loadEntries, type Entry } from "@/lib/entries";
+import { Collage } from "@/components/Collage";
 import { Polaroid } from "@/components/Polaroid";
 import { StickerButton } from "@/components/StickerButton";
 import { WashiTape } from "@/components/WashiTape";
@@ -63,7 +64,7 @@ function todayISO() {
 }
 
 function HomePage() {
-  const { user, logout, updateProfile } = useAuth();
+  const { user, logout, updateProfile, deleteAccount } = useAuth();
   const navigate = useNavigate();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [activeEntry, setActiveEntry] = useState<Entry | null>(null);
@@ -74,11 +75,13 @@ function HomePage() {
   const mainRef = useRef<HTMLElement>(null);
   const profilePhotoRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => setEntries(loadEntries()), []);
+  useEffect(() => {
+    loadEntries().then(setEntries);
+  }, []);
 
   /* ── GSAP ScrollTrigger Parallax & Entrance Animations ── */
   useEffect(() => {
-    if (!mainRef.current) return;
+    if (!mainRef.current || entries.length === 0) return;
     const ctx = gsap.context(() => {
       // Parallax on doodles — they float slower while content scrolls over fixed dot bg
       gsap.to(".home-doodle-float", {
@@ -164,12 +167,6 @@ function HomePage() {
     setProfilePhoto(user?.avatarDataUrl);
   }, [user?.avatarDataUrl, user?.name]);
 
-  const [gdriveLinked, setGdriveLinked] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("momentstash_gdrive_linked") === "true";
-    }
-    return false;
-  });
   const [linkingGdrive, setLinkingGdrive] = useState(false);
   const [exportStartDate, setExportStartDate] = useState("");
   const [exportEndDate, setExportEndDate] = useState("");
@@ -191,13 +188,12 @@ function HomePage() {
   } | null>(null);
 
   useEffect(() => {
+    if (entries.length === 0) return;
     // Load dynamic shelves
     const stored = JSON.parse(
       localStorage.getItem("momentstash_custom_shelves") || "[]",
     ) as string[];
-    const activeShelves = loadEntries()
-      .map((e) => e.collection)
-      .filter(Boolean);
+    const activeShelves = entries.map((e) => e.collection).filter(Boolean);
     const merged = Array.from(new Set([...stored, ...activeShelves]));
     setShelves(merged);
 
@@ -210,19 +206,16 @@ function HomePage() {
     };
   }, [entries]);
 
-  const handleDeleteEntry = (entryId: string) => {
+  const handleDeleteEntry = async (entryId: string) => {
     setDialog({
       kind: "confirm",
       title: "Discard Memory?",
       message:
         "This fold will be gone forever. Are you sure you want to let it go?",
-      onConfirm: () => {
-        const allEntries = loadEntries();
-        const updatedEntries = allEntries.filter((e) => e.id !== entryId);
-        localStorage.setItem(
-          "momentstash_entries",
-          JSON.stringify(updatedEntries),
-        );
+      onConfirm: async () => {
+        const { removeEntry } = await import("@/lib/entries");
+        await removeEntry(entryId);
+        const updatedEntries = await loadEntries();
         setEntries(updatedEntries);
         setActiveEntry(null);
         setDialog(null);
@@ -230,15 +223,10 @@ function HomePage() {
     });
   };
 
-  const handleMoveEntry = (entryId: string, newShelf: string) => {
-    const allEntries = loadEntries();
-    const updatedEntries = allEntries.map((e) => {
-      if (e.id === entryId) {
-        return { ...e, collection: newShelf.trim() };
-      }
-      return e;
-    });
-    localStorage.setItem("momentstash_entries", JSON.stringify(updatedEntries));
+  const handleMoveEntry = async (entryId: string, newShelf: string) => {
+    const { moveEntry } = await import("@/lib/entries");
+    await moveEntry(entryId, newShelf.trim());
+    const updatedEntries = await loadEntries();
     setEntries(updatedEntries);
 
     // Update shelves if moved to a new one
@@ -332,11 +320,12 @@ function HomePage() {
             ? `<div class="tags-container">${e.tags.map((t) => `<span class="tag">#${t}</span>`).join(" ")}</div>`
             : "";
 
-        const photoHtml = e.photoDataUrl
-          ? `<div class="polaroid">
-               <img src="${e.photoDataUrl}" alt="" />
+        const photoHtml =
+          e.photos && e.photos.length > 0
+            ? `<div class="polaroid">
+               ${e.photos.map((p) => `<img src="${p}" alt="" />`).join("")}
              </div>`
-          : "";
+            : "";
 
         return `
           <div class="entry-card">
@@ -547,23 +536,11 @@ function HomePage() {
       const zip = new JSZipLib();
       const modifiedEntries = filtered.map((e) => {
         const entryClone = { ...e };
-        if (
-          entryClone.photoDataUrl &&
-          entryClone.photoDataUrl.startsWith("data:")
-        ) {
-          try {
-            const parts = entryClone.photoDataUrl.split(",");
-            const header = parts[0];
-            const base64Data = parts[1];
-            const mime = header.split(";")[0].split(":")[1] || "image/jpeg";
-            const ext = mime.split("/")[1] || "jpg";
-            const imagePath = `images/${entryClone.id}.${ext}`;
-
-            zip.file(imagePath, base64Data, { base64: true });
-            entryClone.photoDataUrl = imagePath;
-          } catch (err) {
-            console.error("Failed to process entry photo for backup:", err);
-          }
+        if (entryClone.photos && entryClone.photos.length > 0) {
+          // For ZIP exports, since we proxy from /api/photo, we'd need to fetch them.
+          // Because fetching all of them could be slow or complex in the browser sync,
+          // we'll keep the URLs as they are (proxied) so they'll work if the user imports them back!
+          // We don't try to base64 encode them here to save time and memory.
         }
         return entryClone;
       });
@@ -860,8 +837,9 @@ function HomePage() {
                 >
                   <Polaroid
                     src={
-                      e.photoDataUrl ||
-                      spreadFallbacks[i % spreadFallbacks.length]
+                      e.photos && e.photos.length > 0
+                        ? undefined
+                        : spreadFallbacks[i % spreadFallbacks.length]
                     }
                     alt={e.title}
                     caption={
@@ -871,7 +849,13 @@ function HomePage() {
                     tape={e.tape}
                     className="w-full max-w-[12rem] sm:max-w-[13rem] md:max-w-[14rem]"
                     onClick={() => setActiveEntry(e)}
-                  />
+                  >
+                    {e.photos && e.photos.length > 0 && (
+                      <div className="w-full h-full">
+                        <Collage photos={e.photos} />
+                      </div>
+                    )}
+                  </Polaroid>
                 </div>
               ))}
             </div>
@@ -900,12 +884,12 @@ function HomePage() {
                 className="absolute -top-3 left-12"
               />
               <div className="grid grid-cols-1 md:grid-cols-2">
-                {featured.photoDataUrl ? (
-                  <img
-                    src={featured.photoDataUrl}
-                    alt={featured.title}
-                    className="h-72 md:h-96 w-full object-cover"
-                  />
+                {featured.photos && featured.photos.length > 0 ? (
+                  <div className="h-72 md:h-96 w-full flex items-center justify-center p-6 bg-paper-deep/30 overflow-hidden relative">
+                    <div className="w-full max-w-[280px]">
+                      <Collage photos={featured.photos} className="!mt-0" />
+                    </div>
+                  </div>
                 ) : (
                   <div className="h-72 md:h-96 w-full bg-paper-deep/60 grid place-items-center">
                     <span className="text-7xl">{featured.mood}</span>
@@ -975,7 +959,7 @@ function HomePage() {
             </button>
 
             {/* Joint Scrollable Container for all content */}
-            <div className="flex-1 overflow-y-auto subtle-scroll pr-2 space-y-6 mt-2">
+            <div className="flex-1 overflow-y-auto subtle-scroll pr-2 space-y-6 mt-2 pt-2 px-1 -mx-1">
               {/* Header Info */}
               <div className="flex items-start gap-4">
                 <span className="text-4xl leading-none shrink-0">
@@ -1007,27 +991,17 @@ function HomePage() {
                 </div>
               </div>
 
-              {/* Photo */}
-              {activeEntry.photoDataUrl && (
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setImagePreview({
-                        src: activeEntry.photoDataUrl!,
-                        title: activeEntry.title,
-                      })
-                    }
-                    className="block w-full cursor-zoom-in"
-                    aria-label="Enlarge image"
-                  >
-                    <img
-                      src={activeEntry.photoDataUrl}
-                      alt=""
-                      className="w-full max-h-[350px] object-cover rounded-2xl border-2 border-ink/85 shadow-sm"
-                    />
-                  </button>
-                </div>
+              {/* Photos */}
+              {activeEntry.photos && activeEntry.photos.length > 0 && (
+                <Collage
+                  photos={activeEntry.photos}
+                  onPhotoClick={(idx) =>
+                    setImagePreview({
+                      src: activeEntry.photos![idx],
+                      title: activeEntry.title,
+                    })
+                  }
+                />
               )}
 
               {/* Description */}
@@ -1186,7 +1160,7 @@ function HomePage() {
                         <span className="text-primary font-bold animate-pulse">
                           Connecting to Drive...
                         </span>
-                      ) : gdriveLinked ? (
+                      ) : user?.gdriveLinked ? (
                         <span className="text-green-600 font-semibold">
                           Linked to {user?.email || "your Google Drive"}
                         </span>
@@ -1198,30 +1172,23 @@ function HomePage() {
                 </div>
                 <button
                   type="button"
-                  disabled={linkingGdrive}
+                  disabled={linkingGdrive || user?.gdriveLinked}
                   onClick={() => {
-                    if (gdriveLinked) {
-                      setGdriveLinked(false);
-                      localStorage.setItem(
-                        "momentstash_gdrive_linked",
-                        "false",
-                      );
-                      toast.success("Disconnected Google Drive backup.");
-                    } else {
+                    if (!user?.gdriveLinked) {
                       window.location.href = "/api/auth/google";
                     }
                   }}
                   className={[
                     "font-hand text-lg border-2 border-ink px-4 py-1 rounded-full cursor-pointer transition-all active:translate-y-0.5",
-                    gdriveLinked
-                      ? "bg-paper text-red-600 hover:bg-red-50 border-ink/40"
+                    user?.gdriveLinked
+                      ? "bg-paper text-green-600 border-ink/40 cursor-default"
                       : "bg-accent hover:bg-accent/80 text-ink shadow-[2px_2px_0_var(--color-ink)]",
                   ].join(" ")}
                 >
                   {linkingGdrive
                     ? "Connecting..."
-                    : gdriveLinked
-                      ? "Unlink"
+                    : user?.gdriveLinked
+                      ? "Connected"
                       : "Link Drive"}
                 </button>
               </div>
@@ -1232,6 +1199,11 @@ function HomePage() {
                   <Archive className="h-5 w-5 text-primary" /> Backups &
                   Scrapbooks
                 </h3>
+                <p className="font-body text-xs text-ink-soft">
+                  We highly recommend backing up your memories periodically as a
+                  PDF to avoid precious data loss! The PDF only contains text
+                  and loaded images.
+                </p>
 
                 {/* Optional Date Range Fields */}
                 <div className="space-y-3">
@@ -1285,6 +1257,11 @@ function HomePage() {
                   >
                     <FileText className="h-5 w-5" /> Export Scrapbook to PDF
                   </button>
+                  <p className="text-center font-hand text-sm text-ink-soft">
+                    Please backup your scrapbook to PDF periodically to avoid
+                    precious data loss (images from Drive will be loaded and
+                    saved if available).
+                  </p>
 
                   <div className="grid grid-cols-2 gap-3">
                     {/* JSON+Zip Export Button */}
@@ -1314,27 +1291,44 @@ function HomePage() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setSettingsOpen(false)}
-                  className="font-hand text-lg border-2 border-ink/50 px-5 py-1.5 rounded-full bg-paper text-ink-soft hover:bg-accent/30 cursor-pointer transition-all"
-                >
-                  Cancel
-                </button>
+              <div className="flex justify-between gap-3 mt-4">
                 <button
                   type="button"
                   onClick={() => {
-                    updateProfile({
-                      name: profileName,
-                      avatarDataUrl: profilePhoto,
-                    });
-                    setSettingsOpen(false);
+                    if (
+                      confirm(
+                        "Are you absolutely sure you want to permanently delete your account and all local memories? This cannot be undone!",
+                      )
+                    ) {
+                      deleteAccount();
+                    }
                   }}
-                  className="font-hand text-lg border-2 border-ink px-6 py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary-soft cursor-pointer shadow-[2px_2px_0_var(--color-ink)] active:translate-y-0.5 transition-all font-bold"
+                  className="font-hand text-lg border-2 border-red-600/50 px-5 py-1.5 rounded-full bg-red-50 text-red-600 hover:bg-red-100 cursor-pointer transition-all"
                 >
-                  Save Profile
+                  Delete Account
                 </button>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSettingsOpen(false)}
+                    className="font-hand text-lg border-2 border-ink/50 px-5 py-1.5 rounded-full bg-paper text-ink-soft hover:bg-accent/30 cursor-pointer transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateProfile({
+                        name: profileName,
+                        avatarDataUrl: profilePhoto,
+                      });
+                      setSettingsOpen(false);
+                    }}
+                    className="font-hand text-lg border-2 border-ink px-6 py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary-soft cursor-pointer shadow-[2px_2px_0_var(--color-ink)] active:translate-y-0.5 transition-all font-bold"
+                  >
+                    Save Profile
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1401,6 +1395,19 @@ function HomePage() {
             width="3.5rem"
             className="absolute -top-2.5 left-4 pointer-events-none"
           />
+
+          <button
+            onClick={() => {
+              navigate({
+                to: "/create",
+                search: { edit: contextMenu.targetId },
+              });
+              setContextMenu(null);
+            }}
+            className="text-left font-hand text-lg hover:bg-accent/40 text-ink px-3 py-1.5 rounded-lg transition-colors cursor-pointer w-full flex items-center gap-1.5"
+          >
+            <span>✏️</span> Edit Fold
+          </button>
 
           <button
             onClick={() => {

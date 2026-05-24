@@ -1,4 +1,4 @@
-// LocalStorage-backed scrapbook entries store
+// API-backed scrapbook entries store
 
 export type Entry = {
   id: string;
@@ -8,136 +8,106 @@ export type Entry = {
   collection: string; // free-form, e.g. "Mornings", "Travel"
   tags: string[];
   place?: string;
-  photoDataUrl?: string;
+  photos?: string[]; // Array of image URLs
   tape: "pink" | "mint" | "lavender" | "yellow";
   rotate: number; // -3..3
   date: string; // ISO yyyy-mm-dd
   createdAt: number;
 };
 
-const KEY = "momentstash_entries";
-
-export function loadEntries(): Entry[] {
+export async function loadEntries(): Promise<Entry[]> {
   try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return seed();
-    const arr = JSON.parse(raw) as Entry[];
-    return arr.sort((a, b) => b.createdAt - a.createdAt);
-  } catch {
+    const res = await fetch("/api/entries");
+    if (!res.ok) throw new Error("Failed to load entries");
+    const arr = await res.json();
+    return arr
+      .map((row: any) => {
+        const photos: string[] = [];
+
+        // Handle legacy single photo string or multiple Drive IDs
+        if (row.photoDataUrl && String(row.photoDataUrl).startsWith("data:")) {
+          photos.push(row.photoDataUrl);
+        } else if (row.gdrive_file_id) {
+          const ids = String(row.gdrive_file_id).split(",");
+          for (let i = 0; i < ids.length; i++) {
+            const idStr = ids[i].trim();
+            if (idStr) {
+              photos.push(`/api/photo?id=${row.id}&index=${i}`);
+            }
+          }
+        }
+
+        return {
+          ...row,
+          tags:
+            typeof row.tags_json === "string" ? JSON.parse(row.tags_json) : [],
+          collection: row.collection_name,
+          createdAt: row.created_at,
+          photos: photos.length > 0 ? photos : undefined,
+        };
+      })
+      .sort((a: Entry, b: Entry) => b.createdAt - a.createdAt);
+  } catch (err) {
+    console.error("loadEntries error:", err);
     return [];
   }
 }
 
-export function saveEntries(entries: Entry[]): boolean {
+export async function addEntry(entry: Entry): Promise<boolean> {
   try {
-    localStorage.setItem(KEY, JSON.stringify(entries));
-    return true;
-  } catch (e) {
-    console.error("Failed to save entries to localStorage:", e);
+    const res = await fetch("/api/entries", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(entry),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error("Failed to save entry to API:", err);
     return false;
   }
 }
 
-export function addEntry(entry: Entry): boolean {
-  const all = loadEntries();
-  all.unshift(entry);
-  return saveEntries(all);
+export async function updateEntry(entry: Entry): Promise<boolean> {
+  try {
+    const res = await fetch("/api/entries", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(entry),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error("Failed to update entry in API:", err);
+    return false;
+  }
 }
 
-export function removeEntry(id: string) {
-  saveEntries(loadEntries().filter((e) => e.id !== id));
+export async function removeEntry(id: string): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/entries?id=${id}`, { method: "DELETE" });
+    return res.ok;
+  } catch (err) {
+    console.error("Failed to delete entry:", err);
+    return false;
+  }
+}
+
+export async function moveEntry(
+  id: string,
+  collection: string,
+): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/entries`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, collection }),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error("Failed to move entry:", err);
+    return false;
+  }
 }
 
 export function uid() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-}
-
-function seed(): Entry[] {
-  const today = new Date();
-  const iso = (d: Date) => d.toISOString().slice(0, 10);
-  const minus = (n: number) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() - n);
-    return iso(d);
-  };
-  const seeded: Entry[] = [
-    {
-      id: uid(),
-      title: "Morning coffee, no plans",
-      note: "First sip before anyone texted. Steam curling against the cold window.",
-      mood: "☕",
-      collection: "Mornings",
-      tags: ["coffee", "slow"],
-      place: "kitchen",
-      tape: "yellow",
-      rotate: -2,
-      date: iso(today),
-      createdAt: Date.now() - 1000,
-    },
-    {
-      id: uid(),
-      title: "Bakery on 5th",
-      note: "Warm croissant. The bell on the door has a slightly different tune today.",
-      mood: "🥐",
-      collection: "Tiny Joys",
-      tags: ["pastry", "walk"],
-      place: "5th & Pine",
-      tape: "pink",
-      rotate: 2,
-      date: iso(today),
-      createdAt: Date.now() - 50_000,
-    },
-    {
-      id: uid(),
-      title: "Someone left flowers",
-      note: "Tied with kitchen twine on the railing. No note. I left them there.",
-      mood: "🌸",
-      collection: "Tiny Joys",
-      tags: ["flowers", "kindness"],
-      tape: "mint",
-      rotate: -1,
-      date: minus(1),
-      createdAt: Date.now() - 90_000_000,
-    },
-    {
-      id: uid(),
-      title: "The sky did a thing",
-      note: "Rooftop. Whole street paused for ninety seconds of pink.",
-      mood: "🌇",
-      collection: "Sunsets",
-      tags: ["sunset", "rooftop"],
-      place: "rooftop",
-      tape: "lavender",
-      rotate: 1,
-      date: minus(2),
-      createdAt: Date.now() - 180_000_000,
-    },
-    {
-      id: uid(),
-      title: "Library afternoon",
-      note: "Sun stripes on the desk, half a chapter of a book I'll forget the title of.",
-      mood: "📖",
-      collection: "Quiet",
-      tags: ["reading", "library"],
-      place: "Carnegie branch",
-      tape: "yellow",
-      rotate: -2,
-      date: minus(4),
-      createdAt: Date.now() - 350_000_000,
-    },
-    {
-      id: uid(),
-      title: "Laundry on the line",
-      note: "Cotton shirts moving like flags. Lemon detergent + wind.",
-      mood: "🧺",
-      collection: "Mornings",
-      tags: ["home"],
-      tape: "mint",
-      rotate: 2,
-      date: minus(6),
-      createdAt: Date.now() - 520_000_000,
-    },
-  ];
-  saveEntries(seeded);
-  return seeded;
 }

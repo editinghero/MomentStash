@@ -49,7 +49,7 @@ export function AppNav() {
   // Load entries when search is opened
   useEffect(() => {
     if (searchOpen) {
-      setEntries(loadEntries());
+      loadEntries().then(setEntries);
     }
   }, [searchOpen]);
 

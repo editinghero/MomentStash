@@ -7,22 +7,22 @@ import {
 } from "react";
 
 export type MomentStashUser = {
+  id: string;
   name: string;
   email: string;
   avatarDataUrl?: string;
+  gdriveLinked?: boolean;
 };
 
 type AuthCtx = {
   user: MomentStashUser | null;
   ready: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string) => Promise<void>;
+  login: () => void;
+  signup: () => void;
   updateProfile: (profile: { name: string; avatarDataUrl?: string }) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 };
-
-const STORAGE_USER = "momentstash_user";
-const STORAGE_USERS = "momentstash_users"; // { [email]: { name, password } }
 
 const Ctx = createContext<AuthCtx | null>(null);
 
@@ -31,77 +31,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_USER);
-      if (raw) setUser(JSON.parse(raw));
-    } catch {}
-    setReady(true);
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((data) => {
+        setUser(data.user);
+      })
+      .catch((err) => console.error("Auth fetch error:", err))
+      .finally(() => setReady(true));
   }, []);
 
-  const persist = (u: MomentStashUser | null) => {
-    setUser(u);
-    if (u) localStorage.setItem(STORAGE_USER, JSON.stringify(u));
-    else localStorage.removeItem(STORAGE_USER);
+  const login = () => {
+    window.location.href = "/api/auth/google";
   };
 
-  const readUsers = (): Record<
-    string,
-    { name: string; password: string; avatarDataUrl?: string }
-  > => {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_USERS) || "{}");
-    } catch {
-      return {};
-    }
-  };
-
-  const login: AuthCtx["login"] = async (email, password) => {
-    const users = readUsers();
-    const rec = users[email.toLowerCase()];
-    if (!rec || rec.password !== password) {
-      throw new Error("Invalid email or password.");
-    }
-    persist({
-      name: rec.name,
-      email: email.toLowerCase(),
-      avatarDataUrl: rec.avatarDataUrl,
-    });
-  };
-
-  const signup: AuthCtx["signup"] = async (name, email, password) => {
-    const users = readUsers();
-    const key = email.toLowerCase();
-    if (users[key])
-      throw new Error("An account with that email already exists.");
-    users[key] = { name, password };
-    localStorage.setItem(STORAGE_USERS, JSON.stringify(users));
-    persist({ name, email: key });
+  const signup = () => {
+    window.location.href = "/api/auth/google";
   };
 
   const updateProfile: AuthCtx["updateProfile"] = (profile) => {
     if (!user) return;
-    const updated = {
+    setUser({
       ...user,
       name: profile.name.trim() || user.name,
       avatarDataUrl: profile.avatarDataUrl,
-    };
-    const users = readUsers();
-    const rec = users[user.email];
-    if (rec) {
-      users[user.email] = {
-        ...rec,
-        name: updated.name,
-        avatarDataUrl: updated.avatarDataUrl,
-      };
-      localStorage.setItem(STORAGE_USERS, JSON.stringify(users));
-    }
-    persist(updated);
+    });
+    // In a full app, we would POST to /api/auth/profile
   };
 
-  const logout = () => persist(null);
+  const logout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setUser(null);
+    window.location.href = "/";
+  };
+
+  const deleteAccount = async () => {
+    await fetch("/api/auth/me", { method: "DELETE" });
+    setUser(null);
+    window.location.href = "/";
+  };
 
   return (
-    <Ctx.Provider value={{ user, ready, login, signup, updateProfile, logout }}>
+    <Ctx.Provider
+      value={{
+        user,
+        ready,
+        login,
+        signup,
+        updateProfile,
+        logout,
+        deleteAccount,
+      }}
+    >
       {children}
     </Ctx.Provider>
   );

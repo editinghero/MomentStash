@@ -11,13 +11,15 @@ import {
   ArrowSquiggle,
 } from "@/components/Doodles";
 import {
-  ChevronLeft,
-  ChevronRight,
   MapPin,
+  Search,
+  Download,
   FolderHeart,
   Calendar as CalendarIcon,
-  Download,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+import { Collage } from "@/components/Collage";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_app/collections")({
@@ -339,7 +341,7 @@ function CollectionsPage() {
   const [promptValue, setPromptValue] = useState("");
 
   const refreshEntries = useCallback(() => {
-    setEntries(loadEntries());
+    loadEntries().then(setEntries);
   }, []);
 
   useEffect(() => {
@@ -420,7 +422,7 @@ function CollectionsPage() {
       kind: "confirm",
       title: "Delete Shelf?",
       message: `Are you sure you want to fold away "${shelfName}" and all its memories permanently?`,
-      onConfirm: () => {
+      onConfirm: async () => {
         const updatedCustom = customShelves.filter((s) => s !== shelfName);
         setCustomShelves(updatedCustom);
         localStorage.setItem(
@@ -428,14 +430,12 @@ function CollectionsPage() {
           JSON.stringify(updatedCustom),
         );
 
-        const allEntries = loadEntries();
-        const updatedEntries = allEntries.filter(
-          (e) => e.collection !== shelfName,
-        );
-        localStorage.setItem(
-          "momentstash_entries",
-          JSON.stringify(updatedEntries),
-        );
+        const allEntries = await loadEntries();
+        const toDelete = allEntries.filter((e) => e.collection === shelfName);
+        const { removeEntry } = await import("@/lib/entries");
+        await Promise.all(toDelete.map((e) => removeEntry(e.id)));
+
+        const updatedEntries = await loadEntries();
         setEntries(updatedEntries);
 
         if (openCollection === shelfName) {
@@ -452,13 +452,10 @@ function CollectionsPage() {
       title: "Discard Memory?",
       message:
         "This fold will be gone forever. Are you sure you want to let it go?",
-      onConfirm: () => {
-        const allEntries = loadEntries();
-        const updatedEntries = allEntries.filter((e) => e.id !== entryId);
-        localStorage.setItem(
-          "momentstash_entries",
-          JSON.stringify(updatedEntries),
-        );
+      onConfirm: async () => {
+        const { removeEntry } = await import("@/lib/entries");
+        await removeEntry(entryId);
+        const updatedEntries = await loadEntries();
         setEntries(updatedEntries);
         setActiveEntry(null);
         setDialog(null);
@@ -466,15 +463,10 @@ function CollectionsPage() {
     });
   };
 
-  const handleRemoveEntryFromShelf = (entryId: string) => {
-    const allEntries = loadEntries();
-    const updatedEntries = allEntries.map((e) => {
-      if (e.id === entryId) {
-        return { ...e, collection: "" };
-      }
-      return e;
-    });
-    localStorage.setItem("momentstash_entries", JSON.stringify(updatedEntries));
+  const handleRemoveEntryFromShelf = async (entryId: string) => {
+    const { moveEntry } = await import("@/lib/entries");
+    await moveEntry(entryId, "");
+    const updatedEntries = await loadEntries();
     setEntries(updatedEntries);
   };
 
@@ -606,7 +598,9 @@ function CollectionsPage() {
                 <div className="-m-4 grid grid-cols-1 gap-6 overflow-visible p-4 pt-10 pb-6 sm:grid-cols-2 lg:min-h-0 lg:flex-1 lg:overflow-y-auto subtle-scroll">
                   {collections.map(([name, items], idx) => {
                     const tape = tapeFor[idx % tapeFor.length];
-                    const cover = items.find((e) => e.photoDataUrl);
+                    const cover = items.find(
+                      (e) => e.photos && e.photos.length > 0,
+                    );
                     const rotate =
                       (idx % 2 === 0 ? -1 : 1) * (1 + (idx % 3) * 0.4);
                     const isHovered = hoveredShelf === name;
@@ -649,9 +643,9 @@ function CollectionsPage() {
                           width="4rem"
                           className="absolute -top-2 left-6"
                         />
-                        {cover?.photoDataUrl ? (
+                        {cover?.photos && cover.photos.length > 0 ? (
                           <img
-                            src={cover.photoDataUrl}
+                            src={cover.photos[0]}
                             alt=""
                             className="w-full h-24 object-cover rounded-lg border border-ink/40"
                           />
@@ -802,7 +796,7 @@ function CollectionsPage() {
               <ArrowSquiggle className="h-5 w-12 text-secondary shrink-0" />
             </div>
 
-            <div className="flex-1 overflow-y-auto subtle-scroll pr-1 mt-4">
+            <div className="flex-1 overflow-y-auto subtle-scroll pr-1 mt-4 pt-2 px-1 -mx-1">
               {entries.filter((e) => e.collection === openCollection).length ===
               0 ? (
                 <p className="font-hand text-2xl text-ink-soft text-center py-12">
@@ -837,25 +831,10 @@ function CollectionsPage() {
                           width="3.5rem"
                           className="absolute -top-2.5 right-6"
                         />
-                        {e.photoDataUrl && (
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              setImagePreview({
-                                src: e.photoDataUrl!,
-                                title: e.title,
-                              });
-                            }}
-                            className="mb-4 block w-full cursor-zoom-in overflow-hidden rounded-xl border border-ink/40"
-                            aria-label="Enlarge image"
-                          >
-                            <img
-                              src={e.photoDataUrl}
-                              alt=""
-                              className="h-40 w-full object-cover transition-transform duration-200 hover:scale-[1.03]"
-                            />
-                          </button>
+                        {e.photos && e.photos.length > 0 && (
+                          <div className="mb-4">
+                            <Collage photos={e.photos} />
+                          </div>
                         )}
                         <div className="flex items-start gap-3">
                           <span className="text-3xl leading-none shrink-0">
@@ -924,7 +903,7 @@ function CollectionsPage() {
               </p>
             </div>
 
-            <div className="flex-1 overflow-y-auto subtle-scroll pr-1 mt-2">
+            <div className="flex-1 overflow-y-auto subtle-scroll pr-1 mt-2 pt-2 px-1 -mx-1">
               {selectedEntries.length === 0 ? (
                 <p className="font-hand text-2xl text-ink-soft text-center py-6">
                   no folds for this day — perhaps a quiet one ✿
@@ -950,7 +929,16 @@ function CollectionsPage() {
                       }}
                       className="flex items-start gap-4 rounded-xl border border-ink/40 bg-paper-deep/35 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
                     >
-                      <span className="text-3xl leading-none shrink-0">
+                      {e.photos && e.photos.length > 0 && (
+                        <div className="shrink-0 h-16 w-16 md:h-20 md:w-20 rounded-lg overflow-hidden border border-ink/30">
+                          <img
+                            src={e.photos[0]}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      )}
+                      <span className="text-3xl leading-none shrink-0 mt-1">
                         {e.mood}
                       </span>
                       <div className="min-w-0">
@@ -1029,27 +1017,17 @@ function CollectionsPage() {
                 </div>
               </div>
 
-              {/* Photo */}
-              {activeEntry.photoDataUrl && (
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setImagePreview({
-                        src: activeEntry.photoDataUrl!,
-                        title: activeEntry.title,
-                      })
-                    }
-                    className="block w-full cursor-zoom-in"
-                    aria-label="Enlarge image"
-                  >
-                    <img
-                      src={activeEntry.photoDataUrl}
-                      alt=""
-                      className="w-full max-h-[350px] object-cover rounded-2xl border-2 border-ink/85 shadow-sm"
-                    />
-                  </button>
-                </div>
+              {/* Photos */}
+              {activeEntry.photos && activeEntry.photos.length > 0 && (
+                <Collage
+                  photos={activeEntry.photos}
+                  onPhotoClick={(idx) =>
+                    setImagePreview({
+                      src: activeEntry.photos![idx],
+                      title: activeEntry.title,
+                    })
+                  }
+                />
               )}
 
               {/* Description */}
@@ -1149,6 +1127,15 @@ function CollectionsPage() {
             </button>
           ) : (
             <>
+              <button
+                onClick={() => {
+                  window.location.href = `/create?edit=${contextMenu.targetId}`;
+                  setContextMenu(null);
+                }}
+                className="text-left font-hand text-lg hover:bg-accent/40 text-ink px-3 py-1.5 rounded-lg transition-colors cursor-pointer w-full flex items-center gap-1.5"
+              >
+                <span>✏️</span> Edit Fold
+              </button>
               <button
                 onClick={() => {
                   handleRemoveEntryFromShelf(contextMenu.targetId);

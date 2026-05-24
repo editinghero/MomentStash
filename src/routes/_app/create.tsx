@@ -8,7 +8,9 @@ import {
   UnderlineSquiggle,
 } from "@/components/Doodles";
 import { StickerButton } from "@/components/StickerButton";
-import { Camera, X } from "lucide-react";
+import { Camera, X, HardDrive } from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import { Collage } from "@/components/Collage";
 
 export const Route = createFileRoute("/_app/create")({
   head: () => ({
@@ -64,6 +66,7 @@ const SUGGESTED = [
 
 function CreatePage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [title, setTitle] = useState("");
@@ -76,7 +79,7 @@ function CreatePage() {
   const [place, setPlace] = useState("");
   const [tape, setTape] = useState<(typeof TAPES)[number]>("yellow");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [photo, setPhoto] = useState<string | undefined>();
+  const [photos, setPhotos] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [shelfMode, setShelfMode] = useState<"unsorted" | "existing" | "new">(
     "unsorted",
@@ -89,23 +92,27 @@ function CreatePage() {
   const previewRotate = -2;
 
   useEffect(() => {
-    const entries = loadEntries();
-    const custom = JSON.parse(
-      localStorage.getItem("momentstash_custom_shelves") || "[]",
-    ) as string[];
-    const merged = Array.from(
-      new Set([...custom, ...entries.map((e) => e.collection).filter(Boolean)]),
-    );
-    setExistingShelves(merged.length > 0 ? merged : SUGGESTED);
+    loadEntries().then((entries) => {
+      const custom = JSON.parse(
+        localStorage.getItem("momentstash_custom_shelves") || "[]",
+      ) as string[];
+      const merged = Array.from(
+        new Set([
+          ...custom,
+          ...entries.map((e) => e.collection).filter(Boolean),
+        ]),
+      );
+      setExistingShelves(merged.length > 0 ? merged : SUGGESTED);
 
-    // Load unique tags from entries
-    const tagsSet = new Set<string>();
-    entries.forEach((e) => {
-      if (e.tags) {
-        e.tags.forEach((t) => tagsSet.add(t.trim().toLowerCase()));
-      }
+      // Load unique tags from entries
+      const tagsSet = new Set<string>();
+      entries.forEach((e) => {
+        if (e.tags) {
+          e.tags.forEach((t) => tagsSet.add(t.trim().toLowerCase()));
+        }
+      });
+      setAllUsedTags(Array.from(tagsSet));
     });
-    setAllUsedTags(Array.from(tagsSet));
   }, []);
 
   const activeQuery = useMemo(() => {
@@ -139,62 +146,103 @@ function CreatePage() {
     setTagsRaw(cleanParts.join(", ") + ", ");
   };
 
-  const onPickPhoto = (file: File | undefined) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        let w = img.width;
-        let h = img.height;
-        const max = 600; // Optimize dimension limit for smaller base64 size
-        if (w > max || h > max) {
-          if (w > h) {
-            h = Math.round((h * max) / w);
-            w = max;
+  const onPickPhotos = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const newPhotos = [...photos];
+    const maxAllowed = 4 - newPhotos.length;
+    const filesToProcess = Array.from(files).slice(0, maxAllowed);
+
+    filesToProcess.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let w = img.width;
+          let h = img.height;
+          const max = 600; // Optimize dimension limit for smaller base64 size
+          if (w > max || h > max) {
+            if (w > h) {
+              h = Math.round((h * max) / w);
+              w = max;
+            } else {
+              w = Math.round((w * max) / h);
+              h = max;
+            }
+          }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, w, h);
+            const compressed = canvas.toDataURL("image/jpeg", 0.55); // High compression for scrapbook aesthetics
+            setPhotos((prev) => [...prev, compressed]);
           } else {
-            w = Math.round((w * max) / h);
-            h = max;
+            setPhotos((prev) => [...prev, reader.result as string]);
+          }
+        };
+        img.src = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removePhoto = (index: number) => {
+    setPhotos((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const [editId, setEditId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get("edit");
+    if (id) {
+      setEditId(id);
+      loadEntries().then((entries) => {
+        const target = entries.find((e) => e.id === id);
+        if (target) {
+          setTitle(target.title);
+          setNote(target.note);
+          setMood(target.mood);
+          setCollection(target.collection || "");
+          setTagsRaw(target.tags.join(", ") + (target.tags.length ? ", " : ""));
+          setPlace(target.place || "");
+          setTape(target.tape);
+          setDate(target.date);
+          setPhotos(target.photos || []);
+          if (target.collection && !SUGGESTED.includes(target.collection)) {
+            setShelfMode("existing");
           }
         }
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, w, h);
-          const compressed = canvas.toDataURL("image/jpeg", 0.55); // High compression for scrapbook aesthetics
-          setPhoto(compressed);
-        } else {
-          setPhoto(reader.result as string);
-        }
-      };
-      img.src = reader.result as string;
-    };
-    reader.readAsDataURL(file);
-  };
+      });
+    }
+  }, []);
 
   const onSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
     setSaving(true);
     const entryCollection = collection.trim();
-    
+
     try {
       const res = await fetch("/api/entries", {
-        method: "POST",
+        method: editId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          id: editId || undefined,
           title: title.trim(),
           note: note.trim(),
           mood,
           collection: entryCollection,
-          tags: tagsRaw.split(/[,\s#]+/).map((t) => t.trim()).filter(Boolean),
+          tags: tagsRaw
+            .split(/[,\s#]+/)
+            .map((t) => t.trim())
+            .filter(Boolean),
           place: place.trim() || undefined,
           tape,
           rotate: previewRotate,
           date,
-          photoDataUrl: photo, // We send the base64 photo for now to be processed by Drive API in the future
+          photoDataUrls: photos, // Send array to API
         }),
       });
 
@@ -504,42 +552,78 @@ function CreatePage() {
           </Field>
 
           <Field label="photo (optional)">
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={(e) => onPickPhoto(e.target.files?.[0])}
-            />
-            {photo ? (
-              <div className="relative inline-block">
-                <img
-                  src={photo}
-                  alt=""
-                  className="h-40 w-40 object-cover rounded-xl border-2 border-ink"
-                />
+            {!user?.gdriveLinked ? (
+              <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-ink/40 rounded-xl bg-paper-deep/20 text-center">
+                <HardDrive className="h-8 w-8 text-ink-soft mb-2 opacity-50" />
+                <p className="font-hand text-xl text-ink-soft mb-2">
+                  Drive not linked ✿
+                </p>
+                <p className="font-body text-sm text-ink-soft mb-4">
+                  Please connect your Google Drive to enable photo uploads.
+                </p>
                 <button
                   type="button"
-                  onClick={() => setPhoto(undefined)}
-                  className="absolute -top-2 -right-2 h-7 w-7 grid place-items-center rounded-full bg-paper border-2 border-ink"
+                  onClick={() => navigate({ to: "/home" })}
+                  className="font-hand text-lg border-2 border-ink px-4 py-1.5 rounded-full bg-paper hover:bg-accent cursor-pointer transition-colors"
                 >
-                  <X className="h-3 w-3" />
+                  Go to settings
                 </button>
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-ink/50 rounded-xl text-ink-soft font-hand text-xl hover:bg-accent/40 hover:border-ink transition-colors"
-              >
-                <Camera className="h-4 w-4" /> add a photo
-              </button>
+              <>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  hidden
+                  onChange={(e) => onPickPhotos(e.target.files)}
+                />
+
+                {photos.length > 0 && (
+                  <div className="flex flex-wrap gap-3 mb-3">
+                    {photos.map((src, idx) => (
+                      <div key={idx} className="relative inline-block">
+                        <img
+                          src={src}
+                          alt=""
+                          className="h-24 w-24 object-cover rounded-xl border-2 border-ink"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removePhoto(idx)}
+                          className="absolute -top-2 -right-2 h-6 w-6 grid place-items-center rounded-full bg-paper border-2 border-ink"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {photos.length < 4 && (
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-ink/50 rounded-xl text-ink-soft font-hand text-xl hover:bg-accent/40 hover:border-ink transition-colors cursor-pointer w-full justify-center"
+                  >
+                    <Camera className="h-4 w-4" />{" "}
+                    {photos.length > 0 ? "add another photo" : "select photo"}
+                  </button>
+                )}
+              </>
             )}
           </Field>
 
           <div className="flex items-center gap-3 pt-2">
             <StickerButton type="submit" disabled={saving}>
-              {saving ? "folding…" : "fold it in ✿"}
+              {saving
+                ? editId
+                  ? "saving…"
+                  : "folding…"
+                : editId
+                  ? "save changes ✿"
+                  : "fold it in ✿"}
             </StickerButton>
             <Link
               to="/home"
@@ -577,13 +661,7 @@ function CreatePage() {
                 </p>
               </div>
             </div>
-            {photo && (
-              <img
-                src={photo}
-                alt=""
-                className="mt-4 w-full h-36 object-cover rounded-xl border-2 border-ink/60"
-              />
-            )}
+            <Collage photos={photos} className="w-full" />
             <p className="font-body text-ink-soft mt-3 leading-relaxed">
               {note || "a few words about the moment…"}
             </p>

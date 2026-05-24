@@ -10,6 +10,7 @@ import {
   UnderlineSquiggle,
 } from "@/components/Doodles";
 import { MapPin, Search, Download } from "lucide-react";
+import { Collage } from "@/components/Collage";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -58,27 +59,11 @@ function TimelinePage() {
   const timelineRef = useRef<HTMLElement>(null);
 
   const refreshEntries = useCallback(() => {
-    fetch("/api/entries")
-      .then((res) => res.json())
-      .then((data: any[]) => {
-        const mapped = data.map((d) => ({
-          ...d,
-          tags: JSON.parse(d.tags_json || "[]"),
-          collection: d.collection_name,
-        }));
-        setEntries(mapped);
-      })
-      .catch(console.error);
+    loadEntries().then(setEntries).catch(console.error);
   }, []);
 
   useEffect(() => {
     refreshEntries();
-
-    // Load dynamic shelves
-    const stored = JSON.parse(
-      localStorage.getItem("momentstash_custom_shelves") || "[]",
-    ) as string[];
-    // To ensure shelves are updated we use entries state in the dependencies below
   }, [refreshEntries]);
 
   // Use an effect to recalculate shelves when entries change
@@ -398,6 +383,7 @@ function TimelinePage() {
                     />
                     <EntryCard
                       entry={e}
+                      index={gi + i}
                       onClick={() => setActiveEntry(e)}
                       onContextMenu={(event) => {
                         event.preventDefault();
@@ -438,7 +424,7 @@ function TimelinePage() {
             </button>
 
             {/* Joint Scrollable Container for all content */}
-            <div className="flex-1 overflow-y-auto subtle-scroll pr-2 space-y-6 mt-2">
+            <div className="flex-1 overflow-y-auto subtle-scroll pr-2 space-y-6 mt-2 pt-2 px-1 -mx-1">
               {/* Header Info */}
               <div className="flex items-start gap-4">
                 <span className="text-4xl leading-none shrink-0">
@@ -466,27 +452,17 @@ function TimelinePage() {
                 </div>
               </div>
 
-              {/* Photo */}
-              {activeEntry.photoDataUrl && (
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setImagePreview({
-                        src: activeEntry.photoDataUrl!,
-                        title: activeEntry.title,
-                      })
-                    }
-                    className="block w-full cursor-zoom-in"
-                    aria-label="Enlarge image"
-                  >
-                    <img
-                      src={activeEntry.photoDataUrl}
-                      alt=""
-                      className="w-full max-h-[350px] object-cover rounded-2xl border-2 border-ink/85 shadow-sm"
-                    />
-                  </button>
-                </div>
+              {/* Photos */}
+              {activeEntry.photos && activeEntry.photos.length > 0 && (
+                <Collage
+                  photos={activeEntry.photos}
+                  onPhotoClick={(idx) =>
+                    setImagePreview({
+                      src: activeEntry.photos![idx],
+                      title: activeEntry.title,
+                    })
+                  }
+                />
               )}
 
               {/* Description */}
@@ -534,6 +510,16 @@ function TimelinePage() {
             width="3.5rem"
             className="absolute -top-2.5 left-4 pointer-events-none"
           />
+
+          <button
+            onClick={() => {
+              window.location.href = `/create?edit=${contextMenu.targetId}`;
+              setContextMenu(null);
+            }}
+            className="text-left font-hand text-lg hover:bg-accent/40 text-ink px-3 py-1.5 rounded-lg transition-colors cursor-pointer w-full flex items-center gap-1.5"
+          >
+            <span>✏️</span> Edit Fold
+          </button>
 
           <button
             onClick={() => {
@@ -706,22 +692,25 @@ function prettyDate(iso: string) {
 
 function EntryCard({
   entry,
+  index = 0,
   onClick,
   onContextMenu,
 }: {
   entry: Entry;
+  index?: number;
   onClick: () => void;
   onContextMenu?: (e: React.MouseEvent) => void;
 }) {
   const isLong = entry.note.length > 100;
   const summary = isLong ? entry.note.slice(0, 100) + "..." : entry.note;
+  const rotateVal = (index % 2 === 0 ? 1 : -1) * (entry.rotate * 0.5 || 1);
 
   return (
     <article
       onClick={onClick}
       onContextMenu={onContextMenu}
       className="timeline-card relative paper-card rounded-2xl border-2 border-ink/80 p-5 shadow-[var(--shadow-paper)] cursor-pointer hover:shadow-[var(--shadow-lift)] transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] group"
-      style={{ transform: `rotate(${entry.rotate * 0.5}deg)` }}
+      style={{ transform: `rotate(${rotateVal}deg)` }}
     >
       <WashiTape
         color={entry.tape}
@@ -748,12 +737,8 @@ function EntryCard({
         <HeartDoodle className="h-4 w-4 text-primary opacity-60" />
       </div>
 
-      {entry.photoDataUrl && (
-        <img
-          src={entry.photoDataUrl}
-          alt=""
-          className="mt-4 w-full h-44 object-cover rounded-xl border-2 border-ink/60"
-        />
+      {entry.photos && entry.photos.length > 0 && (
+        <Collage photos={entry.photos} />
       )}
 
       <p className="font-body text-ink-soft mt-3 leading-relaxed">
