@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build && npx esbuild dist/server/index.js --bundle --format=esm --outfile=dist/client/_worker.js \"--external:node:*\" \"--external:cloudflare:*\" --platform=node --alias:stream=node:stream --alias:events=node:events --alias:buffer=node:buffer --alias:util=node:util",
+    "build": "vite build && node -e \"try{require('fs').unlinkSync('dist/client/wrangler.json')}catch(e){}\" && npx esbuild dist/server/server.js --bundle --format=esm --outfile=dist/client/_worker.js \"--external:node:*\" \"--external:cloudflare:*\" --platform=neutral --main-fields=browser,module,main --conditions=workerd,worker,browser --alias:stream=node:stream --alias:events=node:events --alias:buffer=node:buffer --alias:util=node:util",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
