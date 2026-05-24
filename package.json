@@ -1,5 +1,6 @@
 {
-  "name": "tanstack_start_ts",
+  "name": "momentstash",
+  "version": "3.0.0",
   "private": true,
   "sideEffects": false,
   "type": "module",
@@ -51,6 +52,7 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
+    "googleapis": "^172.0.0",
     "gsap": "^3.15.0",
     "input-otp": "^1.4.2",
     "jszip": "^3.10.1",
@@ -70,8 +72,9 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260524.1",
     "@eslint/js": "^9.32.0",
-    "@lovable.dev/vite-tanstack-config": "^1.7.0",
+    "@tanstack/start-vite-plugin": "^1.91.1",
     "@types/jszip": "^3.4.0",
     "@types/node": "^22.16.5",
     "@types/react": "^19.2.0",

@@ -79,9 +79,16 @@ async function normalizeCatastrophicSsrResponse(
   return brandedErrorResponse();
 }
 
+import { handleApiRequest, type Env } from "./server/api";
+
 export default {
-  async fetch(request: Request, env: unknown, ctx: unknown) {
+  async fetch(request: Request, env: Env, ctx: unknown) {
     try {
+      const url = new URL(request.url);
+      if (url.pathname.startsWith("/api/")) {
+        return await handleApiRequest(request, env, ctx);
+      }
+
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);

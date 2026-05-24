@@ -58,7 +58,17 @@ function TimelinePage() {
   const timelineRef = useRef<HTMLElement>(null);
 
   const refreshEntries = useCallback(() => {
-    setEntries(loadEntries());
+    fetch("/api/entries")
+      .then((res) => res.json())
+      .then((data: any[]) => {
+        const mapped = data.map((d) => ({
+          ...d,
+          tags: JSON.parse(d.tags_json || "[]"),
+          collection: d.collection_name,
+        }));
+        setEntries(mapped);
+      })
+      .catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -68,12 +78,20 @@ function TimelinePage() {
     const stored = JSON.parse(
       localStorage.getItem("momentstash_custom_shelves") || "[]",
     ) as string[];
-    const activeShelves = loadEntries()
-      .map((e) => e.collection)
-      .filter(Boolean);
+    // To ensure shelves are updated we use entries state in the dependencies below
+  }, [refreshEntries]);
+
+  // Use an effect to recalculate shelves when entries change
+  useEffect(() => {
+    const stored = JSON.parse(
+      localStorage.getItem("momentstash_custom_shelves") || "[]",
+    ) as string[];
+    const activeShelves = entries.map((e) => e.collection).filter(Boolean);
     const merged = Array.from(new Set([...stored, ...activeShelves]));
     setShelves(merged);
+  }, [entries]);
 
+  useEffect(() => {
     const closeMenu = () => setContextMenu(null);
     window.addEventListener("click", closeMenu);
     window.addEventListener("scroll", closeMenu, { passive: true });
@@ -81,7 +99,7 @@ function TimelinePage() {
       window.removeEventListener("click", closeMenu);
       window.removeEventListener("scroll", closeMenu);
     };
-  }, [refreshEntries]);
+  }, []);
 
   /* ── GSAP ScrollTrigger animations ── */
   useEffect(() => {
@@ -183,44 +201,48 @@ function TimelinePage() {
       title: "Discard Memory?",
       message:
         "This fold will be gone forever. Are you sure you want to let it go?",
-      onConfirm: () => {
-        const allEntries = loadEntries();
-        const updatedEntries = allEntries.filter((e) => e.id !== entryId);
-        localStorage.setItem(
-          "momentstash_entries",
-          JSON.stringify(updatedEntries),
-        );
-        setEntries(updatedEntries);
-        setActiveEntry(null);
-        setDialog(null);
+      onConfirm: async () => {
+        try {
+          await fetch(`/api/entries?id=${entryId}`, { method: "DELETE" });
+          setEntries((prev) => prev.filter((e) => e.id !== entryId));
+          setActiveEntry(null);
+          setDialog(null);
+        } catch (err) {
+          console.error(err);
+        }
       },
     });
   };
 
-  const handleMoveEntry = (entryId: string, newShelf: string) => {
-    const allEntries = loadEntries();
-    const updatedEntries = allEntries.map((e) => {
-      if (e.id === entryId) {
-        return { ...e, collection: newShelf.trim() };
-      }
-      return e;
-    });
-    localStorage.setItem("momentstash_entries", JSON.stringify(updatedEntries));
-    setEntries(updatedEntries);
+  const handleMoveEntry = async (entryId: string, newShelf: string) => {
+    try {
+      await fetch("/api/entries", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: entryId, collection: newShelf.trim() }),
+      });
+      setEntries((prev) =>
+        prev.map((e) =>
+          e.id === entryId ? { ...e, collection: newShelf.trim() } : e,
+        ),
+      );
 
-    // Update shelves if moved to a new one
-    if (newShelf.trim() && !shelves.includes(newShelf.trim())) {
-      const updatedShelves = [...shelves, newShelf.trim()];
-      setShelves(updatedShelves);
-      const custom = JSON.parse(
-        localStorage.getItem("momentstash_custom_shelves") || "[]",
-      ) as string[];
-      if (!custom.includes(newShelf.trim())) {
-        localStorage.setItem(
-          "momentstash_custom_shelves",
-          JSON.stringify([...custom, newShelf.trim()]),
-        );
+      // Update shelves if moved to a new one
+      if (newShelf.trim() && !shelves.includes(newShelf.trim())) {
+        const updatedShelves = [...shelves, newShelf.trim()];
+        setShelves(updatedShelves);
+        const custom = JSON.parse(
+          localStorage.getItem("momentstash_custom_shelves") || "[]",
+        ) as string[];
+        if (!custom.includes(newShelf.trim())) {
+          localStorage.setItem(
+            "momentstash_custom_shelves",
+            JSON.stringify([...custom, newShelf.trim()]),
+          );
+        }
       }
+    } catch (err) {
+      console.error(err);
     }
   };
 

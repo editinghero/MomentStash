@@ -174,57 +174,59 @@ function CreatePage() {
     reader.readAsDataURL(file);
   };
 
-  const onSave = (e: React.FormEvent) => {
+  const onSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
     setSaving(true);
     const entryCollection = collection.trim();
-    const entry: Entry = {
-      id: uid(),
-      title: title.trim(),
-      note: note.trim(),
-      mood,
-      collection: entryCollection,
-      tags: tagsRaw
-        .split(/[,\s#]+/)
-        .map((t) => t.trim())
-        .filter(Boolean),
-      place: place.trim() || undefined,
-      photoDataUrl: photo,
-      tape,
-      rotate: previewRotate,
-      date,
-      createdAt: Date.now(),
-    };
+    
+    try {
+      const res = await fetch("/api/entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: title.trim(),
+          note: note.trim(),
+          mood,
+          collection: entryCollection,
+          tags: tagsRaw.split(/[,\s#]+/).map((t) => t.trim()).filter(Boolean),
+          place: place.trim() || undefined,
+          tape,
+          rotate: previewRotate,
+          date,
+          photoDataUrl: photo, // We send the base64 photo for now to be processed by Drive API in the future
+        }),
+      });
 
-    const success = addEntry(entry);
-    if (!success) {
+      if (!res.ok) {
+        throw new Error("Failed to save entry to server");
+      }
+
+      // Persist dynamic shelf locally for UI convenience (optional)
+      if (entryCollection) {
+        const custom = JSON.parse(
+          localStorage.getItem("momentstash_custom_shelves") || "[]",
+        ) as string[];
+        if (
+          !custom.some((s) => s.toLowerCase() === entryCollection.toLowerCase())
+        ) {
+          const updated = [...custom, entryCollection];
+          localStorage.setItem(
+            "momentstash_custom_shelves",
+            JSON.stringify(updated),
+          );
+        }
+      }
+
+      setTimeout(() => navigate({ to: "/timeline" }), 200);
+    } catch (err) {
+      console.error(err);
       setAlertConfig({
-        title: "MomentStash is Full! ⚠️",
-        message:
-          "Oh no! Your MomentStash is full (browser storage limit exceeded). To save this memory, please delete some older notes/photos first, or use a smaller/different photo!",
+        title: "Failed to Save ⚠️",
+        message: "We couldn't save your moment. Please try again later.",
       });
       setSaving(false);
-      return;
     }
-
-    // Persist dynamic shelf permanently if it is a new shelf
-    if (entryCollection) {
-      const custom = JSON.parse(
-        localStorage.getItem("momentstash_custom_shelves") || "[]",
-      ) as string[];
-      if (
-        !custom.some((s) => s.toLowerCase() === entryCollection.toLowerCase())
-      ) {
-        const updated = [...custom, entryCollection];
-        localStorage.setItem(
-          "momentstash_custom_shelves",
-          JSON.stringify(updated),
-        );
-      }
-    }
-
-    setTimeout(() => navigate({ to: "/timeline" }), 200);
   };
 
   return (
