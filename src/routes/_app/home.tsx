@@ -836,24 +836,21 @@ function HomePage() {
                   }}
                 >
                   <Polaroid
-                    src={
-                      e.photos && e.photos.length > 0
-                        ? undefined
-                        : spreadFallbacks[i % spreadFallbacks.length]
-                    }
                     alt={e.title}
                     caption={
                       e.title.length > 28 ? e.title.slice(0, 28) + "…" : e.title
                     }
-                    rotate={e.rotate || (i % 2 === 0 ? -3 : 2)}
+                    rotate={0}
                     tape={e.tape}
                     className="w-full max-w-[12rem] sm:max-w-[13rem] md:max-w-[14rem]"
                     onClick={() => setActiveEntry(e)}
                   >
-                    {e.photos && e.photos.length > 0 && (
+                    {e.photos && e.photos.length > 0 ? (
                       <div className="w-full h-full">
                         <Collage photos={e.photos} />
                       </div>
+                    ) : (
+                      <span className="text-6xl">{e.mood}</span>
                     )}
                   </Polaroid>
                 </div>
