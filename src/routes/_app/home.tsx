@@ -1188,7 +1188,7 @@ function HomePage() {
                         </span>
                       ) : gdriveLinked ? (
                         <span className="text-green-600 font-semibold">
-                          Linked to editi.stash@gmail.com
+                          Linked to {user?.email || "your Google Drive"}
                         </span>
                       ) : (
                         "Keep your journal synced in the cloud"
@@ -1208,18 +1208,7 @@ function HomePage() {
                       );
                       toast.success("Disconnected Google Drive backup.");
                     } else {
-                      setLinkingGdrive(true);
-                      setTimeout(() => {
-                        setLinkingGdrive(false);
-                        setGdriveLinked(true);
-                        localStorage.setItem(
-                          "momentstash_gdrive_linked",
-                          "true",
-                        );
-                        toast.success(
-                          "Successfully linked Google Drive! Future backups will sync here.",
-                        );
-                      }, 1200);
+                      window.location.href = "/api/auth/google";
                     }
                   }}
                   className={[

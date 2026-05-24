@@ -6,6 +6,10 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import { cloudflare } from "@cloudflare/vite-plugin";
 
 export default defineConfig({
+  server: {
+    port: 8080,
+    strictPort: true,
+  },
   plugins: [
     tailwindcss(),
     tsconfigPaths(),
