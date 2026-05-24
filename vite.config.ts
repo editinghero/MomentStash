@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { TanStackStartVite } from "@tanstack/start-vite-plugin";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { cloudflare } from "@cloudflare/vite-plugin";
@@ -10,7 +10,7 @@ export default defineConfig({
     tailwindcss(),
     tsconfigPaths(),
     cloudflare(),
-    TanStackStartVite({
+    tanstackStart({
       server: {
         entry: "src/server.ts"
       }
