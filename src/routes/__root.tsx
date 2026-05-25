@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import { RegisterSW } from "../components/RegisterSW";
 import { AuthProvider } from "@/lib/auth";
 import { ThemeProvider } from "@/lib/theme";
 
@@ -98,8 +99,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { property: "og:type", content: "website" },
         { name: "twitter:card", content: "summary" },
         { name: "twitter:site", content: "@MomentStash" },
+        {
+          name: "theme-color",
+          media: "(prefers-color-scheme: light)",
+          content: "#f6f5f3",
+        },
+        {
+          name: "theme-color",
+          media: "(prefers-color-scheme: dark)",
+          content: "#141414",
+        },
       ],
       links: [
+        { rel: "manifest", href: "/manifest.webmanifest" },
         {
           rel: "stylesheet",
           href: appCss,
@@ -122,6 +134,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
       <body>
         {children}
         <Scripts />
+        <RegisterSW />
       </body>
     </html>
   );
