@@ -1177,7 +1177,7 @@ function HomePage() {
                     }
                   }}
                   className={[
-                    "font-hand text-lg border-2 border-ink px-4 py-1 rounded-full cursor-pointer transition-all active:translate-y-0.5",
+                    "font-hand text-lg border-2 border-ink px-4 py-1 rounded-full cursor-pointer transition-all active:translate-y-0.5 whitespace-nowrap",
                     user?.gdriveLinked
                       ? "bg-paper text-green-600 border-ink/40 cursor-default"
                       : "bg-accent hover:bg-accent/80 text-ink shadow-[2px_2px_0_var(--color-ink)]",
