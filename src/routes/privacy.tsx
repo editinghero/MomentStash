@@ -156,7 +156,7 @@ function PrivacyPage() {
               If you have any questions or feedback about this Privacy Policy,
               please contact us at{" "}
               <span className="font-bold underline">
-                privacy@momentstash.com
+                astralquarks.entrust317@passfwd.com
               </span>
               .
             </p>
