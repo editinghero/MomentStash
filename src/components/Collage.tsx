@@ -1,5 +1,3 @@
-import React from "react";
-
 interface CollageProps {
   photos: string[];
   onPhotoClick?: (index: number) => void;

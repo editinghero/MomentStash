@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState, useMemo } from "react";
-import { addEntry, uid, type Entry, loadEntries } from "@/lib/entries";
+import { loadEntries } from "@/lib/entries";
 import { WashiTape } from "@/components/WashiTape";
 import {
   StarDoodle,

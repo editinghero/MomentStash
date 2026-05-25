@@ -104,11 +104,20 @@ async function signSession(userId: string, secret: string) {
   return `${userId}.${hex}`;
 }
 
+function constantTimeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
+
 async function verifySession(cookie: string, secret: string) {
   const [userId, hex] = cookie.split(".");
   if (!userId || !hex) return null;
   const expected = await signSession(userId, secret);
-  if (cookie === expected) return userId;
+  if (constantTimeEqual(cookie, expected)) return userId;
   return null;
 }
 
@@ -229,7 +238,7 @@ export async function handleApiRequest(
       }
 
       const data = (await request.json()) as AddEntryData;
-      const id = Math.random().toString(36).substring(2, 10);
+      const id = crypto.randomUUID().replace(/-/g, "").substring(0, 8);
       const date = data.date || new Date().toISOString().split("T")[0];
       let gdriveFileId = data.gdriveFileId || null;
       let photoDataUrl = data.photoDataUrl || null;
@@ -268,6 +277,18 @@ export async function handleApiRequest(
           if (driveIds.length > 0) {
             gdriveFileId = driveIds.join(",");
             photoDataUrl = null;
+          } else {
+            const firstBase64 = photoUrls.find((url) =>
+              url.startsWith("data:"),
+            );
+            if (firstBase64) {
+              photoDataUrl = firstBase64;
+            }
+          }
+        } else {
+          const firstBase64 = photoUrls.find((url) => url.startsWith("data:"));
+          if (firstBase64) {
+            photoDataUrl = firstBase64;
           }
         }
       }
@@ -343,12 +364,87 @@ export async function handleApiRequest(
         place?: string;
         tape?: string;
         rotate?: number;
+        date?: string;
+        photoDataUrls?: string[];
       }
 
       const data = (await request.json()) as UpdateEntryData;
       if (data.title !== undefined) {
+        const photoUrls = data.photoDataUrls || [];
+        let finalGDriveFileId: string | null = null;
+        let finalPhotoDataUrl: string | null = null;
+
+        if (photoUrls.length > 0) {
+          const accessToken = await getDriveAccessToken(env, userId);
+          if (accessToken) {
+            const driveIds: string[] = [];
+            let existingDriveIds: string[] = [];
+            const existingEntry = await env.DB.prepare(
+              "SELECT gdrive_file_id FROM entries WHERE id = ? AND user_id = ?",
+            )
+              .bind(data.id, userId)
+              .first();
+            if (existingEntry && existingEntry.gdrive_file_id) {
+              existingDriveIds = String(existingEntry.gdrive_file_id)
+                .split(",")
+                .map((id) => id.trim());
+            }
+
+            for (let i = 0; i < photoUrls.length; i++) {
+              const urlStr = photoUrls[i];
+              if (urlStr.startsWith("data:image")) {
+                const matches = urlStr.match(/^data:(image\/\w+);base64,(.+)$/);
+                if (matches) {
+                  const mimeType = matches[1];
+                  const base64Data = matches[2];
+                  const dateStr =
+                    data.date || new Date().toISOString().split("T")[0];
+                  const filename = `momentstash_${data.id}_${dateStr}_${i}.${mimeType.split("/")[1]}`;
+                  try {
+                    const fileId = await uploadToDrive(
+                      accessToken,
+                      base64Data,
+                      mimeType,
+                      filename,
+                    );
+                    if (fileId) driveIds.push(fileId);
+                  } catch (e) {
+                    console.error("Drive upload error", e);
+                  }
+                }
+              } else if (urlStr.includes("/api/photo")) {
+                try {
+                  const urlObj = new URL(urlStr, "http://localhost");
+                  const idxStr = urlObj.searchParams.get("index");
+                  const idx = idxStr ? parseInt(idxStr, 10) : 0;
+                  if (idx >= 0 && idx < existingDriveIds.length) {
+                    driveIds.push(existingDriveIds[idx]);
+                  }
+                } catch (e) {
+                  console.error("Error parsing existing photo URL", e);
+                }
+              }
+            }
+
+            if (driveIds.length > 0) {
+              finalGDriveFileId = driveIds.join(",");
+              finalPhotoDataUrl = null;
+            } else {
+              const firstBase64 = photoUrls.find((p) => p.startsWith("data:"));
+              if (firstBase64) {
+                finalPhotoDataUrl = firstBase64;
+              }
+            }
+          } else {
+            const firstBase64 = photoUrls.find((p) => p.startsWith("data:"));
+            if (firstBase64) {
+              finalPhotoDataUrl = firstBase64;
+            }
+          }
+        }
+
         await env.DB.prepare(
-          `UPDATE entries SET title = ?, note = ?, mood = ?, collection_name = ?, tags_json = ?, place = ?, tape = ?, rotate = ? WHERE id = ? AND user_id = ?`,
+          `UPDATE entries SET title = ?, note = ?, mood = ?, collection_name = ?, tags_json = ?, place = ?, tape = ?, rotate = ?, gdrive_file_id = ?, photoDataUrl = ? WHERE id = ? AND user_id = ?`,
         )
           .bind(
             data.title,
@@ -359,6 +455,8 @@ export async function handleApiRequest(
             data.place || "",
             data.tape || "yellow",
             data.rotate || 0,
+            finalGDriveFileId,
+            finalPhotoDataUrl,
             data.id,
             userId,
           )
@@ -590,8 +688,7 @@ export async function handleApiRequest(
     console.error("API Error:", err);
     return new Response(
       JSON.stringify({
-        error: err instanceof Error ? err.message : "Unknown error",
-        stack: err instanceof Error ? err.stack : undefined,
+        error: "Internal Server Error",
       }),
       {
         status: 500,

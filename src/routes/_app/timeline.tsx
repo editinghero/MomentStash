@@ -154,15 +154,22 @@ function TimelinePage() {
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return entries;
-    return entries.filter(
-      (e) =>
-        fuzzyMatch(s, e.title) ||
-        fuzzyMatch(s, e.note) ||
-        e.tags.some((t) => fuzzyMatch(s, t)) ||
-        fuzzyMatch(s, e.collection) ||
-        fuzzyMatch(s, e.place) ||
-        fuzzyMatch(s, e.mood),
-    );
+    const tokens = s.split(/[\s,._#\-:()]+/).filter(Boolean);
+    if (tokens.length === 0) return entries;
+
+    return entries.filter((e) => {
+      return tokens.every((token) => {
+        if (e.title.toLowerCase().includes(token)) return true;
+        if (e.note.toLowerCase().includes(token)) return true;
+        if (e.collection && e.collection.toLowerCase().includes(token))
+          return true;
+        if (e.place && e.place.toLowerCase().includes(token)) return true;
+        if (e.mood && e.mood.toLowerCase().includes(token)) return true;
+        if (e.tags && e.tags.some((t) => t.toLowerCase().includes(token)))
+          return true;
+        return false;
+      });
+    });
   }, [q, entries]);
 
   // group by date
@@ -655,27 +662,6 @@ function TimelinePage() {
         </div>
       )}
     </main>
-  );
-}
-
-function fuzzyMatch(query: string, target: string | undefined | null): boolean {
-  if (!target) return false;
-  const qStr = query.toLowerCase().trim();
-  if (!qStr) return false;
-
-  // Direct includes check as a fast path
-  const tStr = target.toLowerCase().trim();
-  if (tStr.includes(qStr) || qStr.includes(tStr)) return true;
-
-  // Split into word tokens
-  const qWords = qStr.split(/[\s,._#\-:()]+/).filter(Boolean);
-  const tWords = tStr.split(/[\s,._#\-:()]+/).filter(Boolean);
-
-  if (qWords.length === 0 || tWords.length === 0) return false;
-
-  // Check if any query word token matches any target word token (substring or reverse substring)
-  return qWords.some((qw) =>
-    tWords.some((tw) => tw.includes(qw) || qw.includes(tw)),
   );
 }
 
