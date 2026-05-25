@@ -592,7 +592,7 @@ export async function handleApiRequest(
         status: 302,
         headers: {
           Location: `${url.origin}/home`,
-          "Set-Cookie": `momentstash_session=${sessionString}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`,
+          "Set-Cookie": `momentstash_session=${sessionString}; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=2592000`,
         },
       });
     }
@@ -640,7 +640,7 @@ export async function handleApiRequest(
       });
       response.headers.set(
         "Set-Cookie",
-        "momentstash_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
+        "momentstash_session=; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=0",
       );
       return response;
     }
@@ -652,7 +652,7 @@ export async function handleApiRequest(
       });
       response.headers.set(
         "Set-Cookie",
-        "momentstash_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
+        "momentstash_session=; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=0",
       );
       return response;
     }
