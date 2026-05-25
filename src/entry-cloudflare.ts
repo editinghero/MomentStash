@@ -13,7 +13,12 @@ function brandedErrorResponse(): Response {
 let lastSsrError: unknown = undefined;
 const originalConsoleError = console.error.bind(console);
 console.error = (...args: unknown[]) => {
-  if (args[0] instanceof Error || (args[0] && typeof args[0] === "object" && "message" in (args[0] as Record<string, unknown>))) {
+  if (
+    args[0] instanceof Error ||
+    (args[0] &&
+      typeof args[0] === "object" &&
+      "message" in (args[0] as Record<string, unknown>))
+  ) {
     lastSsrError = args[0];
   }
   originalConsoleError(...args);
@@ -115,9 +120,10 @@ export default {
       if (response.status >= 500) {
         const body = await response.clone().text();
         const captured = lastSsrError;
-        const detail = captured instanceof Error
-          ? { message: captured.message, stack: captured.stack }
-          : { raw: String(captured) };
+        const detail =
+          captured instanceof Error
+            ? { message: captured.message, stack: captured.stack }
+            : { raw: String(captured) };
         console.error("SSR error response:", body.slice(0, 1000));
         return new Response(
           JSON.stringify({

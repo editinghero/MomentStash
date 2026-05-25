@@ -1,7 +1,7 @@
 class AsyncLocalStorage<T = unknown> {
   #store: T | undefined = undefined;
 
-  run<S>(store: T, callback: (...args: any[]) => S, ...args: any[]): S {
+  run<S>(store: T, callback: (...args: unknown[]) => S, ...args: unknown[]): S {
     const prev = this.#store;
     this.#store = store;
     try {
@@ -19,7 +19,7 @@ class AsyncLocalStorage<T = unknown> {
     this.#store = undefined;
   }
 
-  exit<S>(callback: (...args: any[]) => S, ...args: any[]): S {
+  exit<S>(callback: (...args: unknown[]) => S, ...args: unknown[]): S {
     return callback(...args);
   }
 }

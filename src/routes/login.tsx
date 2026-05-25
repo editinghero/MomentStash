@@ -83,11 +83,11 @@ function LoginPage() {
             Sign in to start backing up your memories securely.
           </p>
 
-           <button
-             type="button"
-             onClick={() => (window.location.href = "/api/auth/google")}
-             className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-ink bg-white px-4 py-3 font-hand text-xl text-ink hover:bg-gray-50 transition shadow-[3px_4px_0_var(--color-ink)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_3px_0_var(--color-ink)] cursor-pointer dark:bg-zinc-900 dark:text-zinc-100 dark:border-zinc-700 dark:shadow-[3px_4px_0_#3f3f46] dark:hover:bg-zinc-800"
-           >
+          <button
+            type="button"
+            onClick={() => (window.location.href = "/api/auth/google")}
+            className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-ink bg-white px-4 py-3 font-hand text-xl text-ink hover:bg-gray-50 transition shadow-[3px_4px_0_var(--color-ink)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_3px_0_var(--color-ink)] cursor-pointer dark:bg-zinc-900 dark:text-zinc-100 dark:border-zinc-700 dark:shadow-[3px_4px_0_#3f3f46] dark:hover:bg-zinc-800"
+          >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"

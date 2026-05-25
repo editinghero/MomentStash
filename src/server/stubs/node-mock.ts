@@ -16,11 +16,11 @@ const createMock = () => {
     get: (_, prop) => {
       if (prop === "default") return mock;
       if (prop === "then" || prop === "__esModule") return undefined;
-      
+
       // Recursively return a mock for any other property access
       // to ensure that something.property.method() never fails with "undefined"
       if (typeof prop === "string") {
-        return mock; 
+        return mock;
       }
       return undefined;
     },

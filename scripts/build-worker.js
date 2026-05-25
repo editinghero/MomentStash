@@ -36,8 +36,17 @@ const mocks = {
 // When imported via bare specifier (e.g. require("stream")), redirect to node:xxx
 // so they resolve to the native implementation.
 const nativeModules = [
-  "assert", "buffer", "crypto", "events", "path",
-  "querystring", "stream", "stream/web", "url", "util", "zlib",
+  "assert",
+  "buffer",
+  "crypto",
+  "events",
+  "path",
+  "querystring",
+  "stream",
+  "stream/web",
+  "url",
+  "util",
+  "zlib",
 ];
 
 const resolvedMocks = Object.fromEntries(
@@ -45,7 +54,9 @@ const resolvedMocks = Object.fromEntries(
 );
 
 const nodeMockPath = require("path").resolve("./src/server/stubs/node-mock.ts");
-const processMockPath = require("path").resolve("./src/server/stubs/process-mock.ts");
+const processMockPath = require("path").resolve(
+  "./src/server/stubs/process-mock.ts",
+);
 
 const bannerCode = `
 import * as _assert from "node:assert";
@@ -100,46 +111,54 @@ build({
   platform: "neutral",
   mainFields: ["browser", "module", "main"],
   conditions: ["workerd", "worker", "browser"],
-  plugins: [{
-    name: "node-mocks",
-    setup(build) {
-      const mockNames = new Set(Object.keys(resolvedMocks));
+  plugins: [
+    {
+      name: "node-mocks",
+      setup(build) {
+        const mockNames = new Set(Object.keys(resolvedMocks));
 
-      build.onResolve({ filter: /^node:.+/ }, (args) => {
-        const name = args.path.slice(5);
-        if (resolvedMocks[name]) {
-          return { path: resolvedMocks[name] };
-        }
-        // Not in mocks → it's a natively-available module (e.g. node:stream, node:buffer)
-        // Mark as external so Cloudflare Workers resolves it at runtime
-        return { external: true };
-      });
+        build.onResolve({ filter: /^node:.+/ }, (args) => {
+          const name = args.path.slice(5);
+          if (resolvedMocks[name]) {
+            return { path: resolvedMocks[name] };
+          }
+          // Not in mocks → it's a natively-available module (e.g. node:stream, node:buffer)
+          // Mark as external so Cloudflare Workers resolves it at runtime
+          return { external: true };
+        });
 
-      // Bare specifier for natively-available modules → treat as external
-      // to `node:*` path so Cloudflare Workers resolves it at runtime.
-      // (e.g. "stream" → external "node:stream")
-      const bareNative = nativeModules.map((m) => m.replace("/", "\\/"));
-      build.onResolve({ filter: new RegExp(`^(${bareNative.join("|")})$`) }, (args) => {
-        return { external: true, path: `node:${args.path}` };
-      });
+        // Bare specifier for natively-available modules → treat as external
+        // to `node:*` path so Cloudflare Workers resolves it at runtime.
+        // (e.g. "stream" → external "node:stream")
+        const bareNative = nativeModules.map((m) => m.replace("/", "\\/"));
+        build.onResolve(
+          { filter: new RegExp(`^(${bareNative.join("|")})$`) },
+          (args) => {
+            return { external: true, path: `node:${args.path}` };
+          },
+        );
 
-      // Bare specifier for mocked modules → forward to the mock directly
-      // (e.g. bare "process", "fs" used by some bundled libraries)
-      const bareMockNames = Object.keys(resolvedMocks).filter(
-        (k) => !nativeModules.includes(k),
-      );
-      build.onResolve({ filter: new RegExp(`^(${bareMockNames.join("|")})$`) }, (args) => {
-        return { path: resolvedMocks[args.path] };
-      });
+        // Bare specifier for mocked modules → forward to the mock directly
+        // (e.g. bare "process", "fs" used by some bundled libraries)
+        const bareMockNames = Object.keys(resolvedMocks).filter(
+          (k) => !nativeModules.includes(k),
+        );
+        build.onResolve(
+          { filter: new RegExp(`^(${bareMockNames.join("|")})$`) },
+          (args) => {
+            return { path: resolvedMocks[args.path] };
+          },
+        );
 
-      build.onResolve({ filter: /^gsap(\/.*)?$/ }, (args) => {
-        if (resolvedMocks[args.path]) {
-          return { path: resolvedMocks[args.path] };
-        }
-        return { path: nodeMockPath };
-      });
+        build.onResolve({ filter: /^gsap(\/.*)?$/ }, (args) => {
+          if (resolvedMocks[args.path]) {
+            return { path: resolvedMocks[args.path] };
+          }
+          return { path: nodeMockPath };
+        });
+      },
     },
-  }],
+  ],
   minify: true,
   banner: {
     js: bannerCode,

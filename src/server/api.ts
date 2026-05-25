@@ -18,9 +18,17 @@ function base64ToBytes(base64: string): Uint8Array {
   return bytes;
 }
 
+interface GoogleTokenResponse {
+  access_token: string;
+  refresh_token?: string;
+  expires_in?: number;
+  scope?: string;
+  token_type?: string;
+}
+
 async function tokenExchange(
   body: URLSearchParams,
-): Promise<any> {
+): Promise<GoogleTokenResponse> {
   const resp = await fetch(GOOGLE_TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -30,7 +38,7 @@ async function tokenExchange(
     const text = await resp.text();
     throw new Error(`Google token endpoint error ${resp.status}: ${text}`);
   }
-  return resp.json();
+  return resp.json() as Promise<GoogleTokenResponse>;
 }
 
 async function getAccessToken(
@@ -55,7 +63,9 @@ async function getDriveAccessToken(
 ): Promise<string | null> {
   const row = await env.DB.prepare(
     "SELECT google_refresh_token FROM users WHERE id = ?",
-  ).bind(userId).first();
+  )
+    .bind(userId)
+    .first();
   if (!row?.google_refresh_token) return null;
   return getAccessToken(
     row.google_refresh_token as string,
@@ -203,7 +213,22 @@ export async function handleApiRequest(
     if (path === "/api/entries" && request.method === "POST") {
       if (!userId) return new Response("Unauthorized", { status: 401 });
 
-      const data = (await request.json()) as any;
+      interface AddEntryData {
+        title: string;
+        note?: string;
+        mood?: string;
+        collection?: string;
+        tags?: string[];
+        place?: string;
+        tape?: string;
+        rotate?: number;
+        date?: string;
+        gdriveFileId?: string;
+        photoDataUrl?: string;
+        photoDataUrls?: string[];
+      }
+
+      const data = (await request.json()) as AddEntryData;
       const id = Math.random().toString(36).substring(2, 10);
       const date = data.date || new Date().toISOString().split("T")[0];
       let gdriveFileId = data.gdriveFileId || null;
@@ -308,7 +333,19 @@ export async function handleApiRequest(
     // 2c. Update entry
     if (path === "/api/entries" && request.method === "PUT") {
       if (!userId) return new Response("Unauthorized", { status: 401 });
-      const data = (await request.json()) as any;
+      interface UpdateEntryData {
+        id: string;
+        title?: string;
+        note?: string;
+        mood?: string;
+        collection?: string;
+        tags?: string[];
+        place?: string;
+        tape?: string;
+        rotate?: number;
+      }
+
+      const data = (await request.json()) as UpdateEntryData;
       if (data.title !== undefined) {
         await env.DB.prepare(
           `UPDATE entries SET title = ?, note = ?, mood = ?, collection_name = ?, tags_json = ?, place = ?, tape = ?, rotate = ? WHERE id = ? AND user_id = ?`,
@@ -344,11 +381,15 @@ export async function handleApiRequest(
 
       const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
       authUrl.searchParams.set("client_id", env.GOOGLE_CLIENT_ID);
-      authUrl.searchParams.set("redirect_uri", `${url.origin}/api/auth/callback`);
+      authUrl.searchParams.set(
+        "redirect_uri",
+        `${url.origin}/api/auth/callback`,
+      );
       authUrl.searchParams.set("response_type", "code");
       authUrl.searchParams.set("access_type", "offline");
       authUrl.searchParams.set("prompt", "consent");
-      authUrl.searchParams.set("scope",
+      authUrl.searchParams.set(
+        "scope",
         "https://www.googleapis.com/auth/drive.appdata profile email",
       );
 
@@ -525,8 +566,7 @@ export async function handleApiRequest(
       const targetFileId = ids[index].trim();
 
       const accessToken = await getDriveAccessToken(env, userId);
-      if (!accessToken)
-        return new Response("No Drive auth", { status: 401 });
+      if (!accessToken) return new Response("No Drive auth", { status: 401 });
 
       const driveResp = await fetch(
         `${GOOGLE_DRIVE_API}/${targetFileId}?alt=media`,
