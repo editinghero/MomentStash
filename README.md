@@ -7,7 +7,7 @@ MomentStash is a digital memory vault and handcrafted scrapbook for your daily m
 
 ---
 
-## 🎨 Features
+##  Features
 
 * **Handcrafted Scrapbook Aesthetic**: Layered papers, vintage Polaroid frames, color-matched Washi Tapes, hand-drawn squiggles, and responsive GSAP ScrollTrigger physics.
 * **Smart Tokenized Search**: A robust multi-word timeline search. Easily query memory contents, tags (`#thrift`), places, mood stickers, or exact shelves (collections).
@@ -21,7 +21,7 @@ MomentStash is a digital memory vault and handcrafted scrapbook for your daily m
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### 1. Register for Access
 During the test phase, send your login email to **astralquarks.entrust317@passfwd.com**. Once added to the Google Console trust list, you can log in instantly.
@@ -37,7 +37,7 @@ During the test phase, send your login email to **astralquarks.entrust317@passfw
 
 ---
 
-## 📱 Install as an App (PWA)
+##  Install as an App (PWA)
 
 MomentStash is a Progressive Web App and can be added directly to your device home screen.
 
@@ -47,7 +47,7 @@ MomentStash is a Progressive Web App and can be added directly to your device ho
 
 ---
 
-## 🔒 Security & Privacy
+##  Security & Privacy
 
 * **Isolated Drive Storage**: The Google Drive AppData folder is invisible to other applications and keeps your attachments private.
 * **Session Cookies Hardening**: Session cookies use strict `HttpOnly`, `SameSite=Lax`, and `Secure` attributes, shielding them from XSS theft and CSRF attacks.
@@ -55,7 +55,7 @@ MomentStash is a Progressive Web App and can be added directly to your device ho
 
 ---
 
-## 🛠️ For Developers
+##  For Developers
 
 Want to run your own instance of MomentStash or contribute?
 
