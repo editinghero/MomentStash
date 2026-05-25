@@ -1,5 +1,6 @@
 import type { D1Database } from "@cloudflare/workers-types";
 import { google } from "googleapis";
+import { PassThrough } from "node:stream";
 
 export interface Env {
   DB: D1Database;
@@ -119,7 +120,6 @@ export async function handleApiRequest(
           });
 
           const drive = google.drive({ version: "v3", auth: oauth2Client });
-          const { PassThrough } = await import("node:stream");
 
           for (let i = 0; i < photoUrls.length; i++) {
             const urlStr = photoUrls[i];
