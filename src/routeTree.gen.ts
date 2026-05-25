@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
@@ -17,6 +19,16 @@ import { Route as AppHomeRouteImport } from './routes/_app/home'
 import { Route as AppCreateRouteImport } from './routes/_app/create'
 import { Route as AppCollectionsRouteImport } from './routes/_app/collections'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -55,6 +67,8 @@ const AppCollectionsRoute = AppCollectionsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/collections': typeof AppCollectionsRoute
   '/create': typeof AppCreateRoute
   '/home': typeof AppHomeRoute
@@ -63,6 +77,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/collections': typeof AppCollectionsRoute
   '/create': typeof AppCreateRoute
   '/home': typeof AppHomeRoute
@@ -73,6 +89,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/_app/collections': typeof AppCollectionsRoute
   '/_app/create': typeof AppCreateRoute
   '/_app/home': typeof AppHomeRoute
@@ -80,14 +98,32 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/collections' | '/create' | '/home' | '/timeline'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/privacy'
+    | '/terms'
+    | '/collections'
+    | '/create'
+    | '/home'
+    | '/timeline'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/collections' | '/create' | '/home' | '/timeline'
+  to:
+    | '/'
+    | '/login'
+    | '/privacy'
+    | '/terms'
+    | '/collections'
+    | '/create'
+    | '/home'
+    | '/timeline'
   id:
     | '__root__'
     | '/'
     | '/_app'
     | '/login'
+    | '/privacy'
+    | '/terms'
     | '/_app/collections'
     | '/_app/create'
     | '/_app/home'
@@ -98,10 +134,26 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -174,6 +226,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
