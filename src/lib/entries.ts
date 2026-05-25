@@ -119,3 +119,31 @@ export async function moveEntry(
 export function uid() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
+
+export async function loadCustomShelves(): Promise<string[]> {
+  try {
+    const res = await fetch("/api/shelves");
+    if (!res.ok) throw new Error("Failed to load shelves");
+    return await res.json();
+  } catch (err) {
+    console.error("loadCustomShelves error:", err);
+    return JSON.parse(
+      localStorage.getItem("momentstash_custom_shelves") || "[]",
+    );
+  }
+}
+
+export async function saveCustomShelves(shelves: string[]): Promise<boolean> {
+  try {
+    localStorage.setItem("momentstash_custom_shelves", JSON.stringify(shelves));
+    const res = await fetch("/api/shelves", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(shelves),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error("saveCustomShelves error:", err);
+    return false;
+  }
+}

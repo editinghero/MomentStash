@@ -16,6 +16,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { WashiTape } from "@/components/WashiTape";
 import { loadEntries, type Entry } from "@/lib/entries";
 import { useAuth } from "@/lib/auth";
+import { Collage } from "@/components/Collage";
 
 type NavItem = {
   to: "/home" | "/timeline" | "/collections" | "/create";
@@ -391,25 +392,17 @@ export function AppNav() {
               </div>
 
               {/* Photo */}
-              {activeEntry.photoDataUrl && (
+              {activeEntry.photos && activeEntry.photos.length > 0 && (
                 <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() =>
+                  <Collage
+                    photos={activeEntry.photos}
+                    onPhotoClick={(idx) =>
                       setImagePreview({
-                        src: activeEntry.photoDataUrl!,
+                        src: activeEntry.photos![idx],
                         title: activeEntry.title,
                       })
                     }
-                    className="block w-full cursor-zoom-in"
-                    aria-label="Enlarge image"
-                  >
-                    <img
-                      src={activeEntry.photoDataUrl}
-                      alt=""
-                      className="w-full max-h-[350px] object-cover rounded-2xl border-2 border-ink/85 shadow-sm"
-                    />
-                  </button>
+                  />
                 </div>
               )}
 
@@ -559,9 +552,9 @@ export function AppNav() {
                             </p>
                           </div>
                         </div>
-                        {e.photoDataUrl && (
+                        {e.photos && e.photos.length > 0 && (
                           <img
-                            src={e.photoDataUrl}
+                            src={e.photos[0]}
                             alt=""
                             className="w-full md:w-32 h-32 object-cover rounded-xl border border-ink/40 shrink-0"
                           />

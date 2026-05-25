@@ -92,10 +92,10 @@ function CreatePage() {
   const previewRotate = -2;
 
   useEffect(() => {
-    loadEntries().then((entries) => {
-      const custom = JSON.parse(
-        localStorage.getItem("momentstash_custom_shelves") || "[]",
-      ) as string[];
+    Promise.all([
+      loadEntries(),
+      import("@/lib/entries").then((m) => m.loadCustomShelves()),
+    ]).then(([entries, custom]) => {
       const merged = Array.from(
         new Set([
           ...custom,
@@ -259,10 +259,9 @@ function CreatePage() {
           !custom.some((s) => s.toLowerCase() === entryCollection.toLowerCase())
         ) {
           const updated = [...custom, entryCollection];
-          localStorage.setItem(
-            "momentstash_custom_shelves",
-            JSON.stringify(updated),
-          );
+          import("@/lib/entries").then(({ saveCustomShelves }) => {
+            saveCustomShelves(updated);
+          });
         }
       }
 

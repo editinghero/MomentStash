@@ -190,12 +190,13 @@ function HomePage() {
   useEffect(() => {
     if (entries.length === 0) return;
     // Load dynamic shelves
-    const stored = JSON.parse(
-      localStorage.getItem("momentstash_custom_shelves") || "[]",
-    ) as string[];
-    const activeShelves = entries.map((e) => e.collection).filter(Boolean);
-    const merged = Array.from(new Set([...stored, ...activeShelves]));
-    setShelves(merged);
+    import("@/lib/entries").then(({ loadCustomShelves }) => {
+      loadCustomShelves().then((stored) => {
+        const activeShelves = entries.map((e) => e.collection).filter(Boolean);
+        const merged = Array.from(new Set([...stored, ...activeShelves]));
+        setShelves(merged);
+      });
+    });
 
     const closeMenu = () => setContextMenu(null);
     window.addEventListener("click", closeMenu);
@@ -237,10 +238,10 @@ function HomePage() {
         localStorage.getItem("momentstash_custom_shelves") || "[]",
       ) as string[];
       if (!custom.includes(newShelf.trim())) {
-        localStorage.setItem(
-          "momentstash_custom_shelves",
-          JSON.stringify([...custom, newShelf.trim()]),
-        );
+        const updated = [...custom, newShelf.trim()];
+        import("@/lib/entries").then(({ saveCustomShelves }) => {
+          saveCustomShelves(updated);
+        });
       }
     }
   };

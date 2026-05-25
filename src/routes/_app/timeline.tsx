@@ -68,12 +68,13 @@ function TimelinePage() {
 
   // Use an effect to recalculate shelves when entries change
   useEffect(() => {
-    const stored = JSON.parse(
-      localStorage.getItem("momentstash_custom_shelves") || "[]",
-    ) as string[];
-    const activeShelves = entries.map((e) => e.collection).filter(Boolean);
-    const merged = Array.from(new Set([...stored, ...activeShelves]));
-    setShelves(merged);
+    import("@/lib/entries").then(({ loadCustomShelves }) => {
+      loadCustomShelves().then((stored) => {
+        const activeShelves = entries.map((e) => e.collection).filter(Boolean);
+        const merged = Array.from(new Set([...stored, ...activeShelves]));
+        setShelves(merged);
+      });
+    });
   }, [entries]);
 
   useEffect(() => {
@@ -227,10 +228,10 @@ function TimelinePage() {
           localStorage.getItem("momentstash_custom_shelves") || "[]",
         ) as string[];
         if (!custom.includes(newShelf.trim())) {
-          localStorage.setItem(
-            "momentstash_custom_shelves",
-            JSON.stringify([...custom, newShelf.trim()]),
-          );
+          const updated = [...custom, newShelf.trim()];
+          import("@/lib/entries").then(({ saveCustomShelves }) => {
+            saveCustomShelves(updated);
+          });
         }
       }
     } catch (err) {

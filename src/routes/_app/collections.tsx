@@ -346,10 +346,11 @@ function CollectionsPage() {
 
   useEffect(() => {
     refreshEntries();
-    const stored = JSON.parse(
-      localStorage.getItem("momentstash_custom_shelves") || "[]",
-    ) as string[];
-    setCustomShelves(stored);
+    import("@/lib/entries").then(({ loadCustomShelves }) => {
+      loadCustomShelves().then((stored) => {
+        setCustomShelves(stored);
+      });
+    });
 
     const closeMenu = () => setContextMenu(null);
     window.addEventListener("click", closeMenu);
@@ -408,10 +409,9 @@ function CollectionsPage() {
         }
         const updated = [...customShelves, trimmed];
         setCustomShelves(updated);
-        localStorage.setItem(
-          "momentstash_custom_shelves",
-          JSON.stringify(updated),
-        );
+        import("@/lib/entries").then(({ saveCustomShelves }) => {
+          saveCustomShelves(updated);
+        });
         setDialog(null);
       },
     });
@@ -425,10 +425,8 @@ function CollectionsPage() {
       onConfirm: async () => {
         const updatedCustom = customShelves.filter((s) => s !== shelfName);
         setCustomShelves(updatedCustom);
-        localStorage.setItem(
-          "momentstash_custom_shelves",
-          JSON.stringify(updatedCustom),
-        );
+        const { saveCustomShelves } = await import("@/lib/entries");
+        await saveCustomShelves(updatedCustom);
 
         const allEntries = await loadEntries();
         const toDelete = allEntries.filter((e) => e.collection === shelfName);

@@ -208,7 +208,7 @@ export async function handleApiRequest(
       if (!userId) return new Response("Unauthorized", { status: 401 });
 
       const { results } = await env.DB.prepare(
-        "SELECT * FROM entries WHERE user_id = ? ORDER BY date DESC",
+        "SELECT * FROM entries WHERE user_id = ? AND id != 'custom_shelves_sync' ORDER BY date DESC",
       )
         .bind(userId)
         .all();
@@ -469,6 +469,39 @@ export async function handleApiRequest(
           .run();
       }
       return new Response(JSON.stringify({ success: true }));
+    }
+
+    // 2d. Sync custom empty shelves list
+    if (path === "/api/shelves" && request.method === "GET") {
+      if (!userId) return new Response("Unauthorized", { status: 401 });
+      const row = await env.DB.prepare(
+        "SELECT note FROM entries WHERE user_id = ? AND id = 'custom_shelves_sync'",
+      )
+        .bind(userId)
+        .first<{ note: string }>();
+
+      const shelves = row?.note ? JSON.parse(row.note) : [];
+      return new Response(JSON.stringify(shelves), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    if (path === "/api/shelves" && request.method === "POST") {
+      if (!userId) return new Response("Unauthorized", { status: 401 });
+      const shelves = (await request.json()) as string[];
+      const shelvesJson = JSON.stringify(shelves);
+
+      await env.DB.prepare(
+        `INSERT INTO entries (id, user_id, title, note, mood, collection_name, tags_json, place, tape, rotate, date, created_at)
+         VALUES ('custom_shelves_sync', ?, '__custom_shelves__', ?, '', '', '[]', '', 'pink', 0, '1970-01-01', ?)
+         ON CONFLICT(id) DO UPDATE SET note = ?`,
+      )
+        .bind(userId, shelvesJson, Date.now(), shelvesJson)
+        .run();
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     // 3. Google OAuth Start
