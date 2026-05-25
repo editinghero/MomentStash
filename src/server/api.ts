@@ -1,11 +1,67 @@
 import type { D1Database } from "@cloudflare/workers-types";
-import { google } from "googleapis";
-import { PassThrough } from "node:stream";
 
 export interface Env {
   DB: D1Database;
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
+}
+
+const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
+const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
+const GOOGLE_DRIVE_API = "https://www.googleapis.com/drive/v3/files";
+const GOOGLE_DRIVE_UPLOAD = "https://www.googleapis.com/upload/drive/v3/files";
+
+function base64ToBytes(base64: string): Uint8Array {
+  const binaryStr = atob(base64);
+  const bytes = new Uint8Array(binaryStr.length);
+  for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+  return bytes;
+}
+
+async function tokenExchange(
+  body: URLSearchParams,
+): Promise<any> {
+  const resp = await fetch(GOOGLE_TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+  if (!resp.ok) {
+    const text = await resp.text();
+    throw new Error(`Google token endpoint error ${resp.status}: ${text}`);
+  }
+  return resp.json();
+}
+
+async function getAccessToken(
+  refreshToken: string,
+  clientId: string,
+  clientSecret: string,
+): Promise<string> {
+  const data = await tokenExchange(
+    new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
+      grant_type: "refresh_token",
+    }),
+  );
+  return data.access_token;
+}
+
+async function getDriveAccessToken(
+  env: Env,
+  userId: string,
+): Promise<string | null> {
+  const row = await env.DB.prepare(
+    "SELECT google_refresh_token FROM users WHERE id = ?",
+  ).bind(userId).first();
+  if (!row?.google_refresh_token) return null;
+  return getAccessToken(
+    row.google_refresh_token as string,
+    env.GOOGLE_CLIENT_ID,
+    env.GOOGLE_CLIENT_SECRET,
+  );
 }
 
 function parseCookies(cookieStr: string | null): Record<string, string> {
@@ -44,6 +100,60 @@ async function verifySession(cookie: string, secret: string) {
   const expected = await signSession(userId, secret);
   if (cookie === expected) return userId;
   return null;
+}
+
+async function uploadToDrive(
+  accessToken: string,
+  base64Data: string,
+  mimeType: string,
+  filename: string,
+): Promise<string | null> {
+  const binaryData = base64ToBytes(base64Data);
+
+  const metaResp = await fetch(GOOGLE_DRIVE_API, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: filename,
+      parents: ["appDataFolder"],
+    }),
+  });
+  if (!metaResp.ok) {
+    const text = await metaResp.text();
+    console.error("Drive metadata create error", metaResp.status, text);
+    return null;
+  }
+  const fileData = await metaResp.json();
+  const fileId = fileData.id;
+  if (!fileId) return null;
+
+  const uploadResp = await fetch(
+    `${GOOGLE_DRIVE_UPLOAD}/${fileId}?uploadType=media`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": mimeType,
+      },
+      body: binaryData,
+    },
+  );
+  if (!uploadResp.ok) {
+    const text = await uploadResp.text();
+    console.error("Drive upload error", uploadResp.status, text);
+    return null;
+  }
+  return fileId;
+}
+
+async function deleteDriveFile(accessToken: string, fileId: string) {
+  await fetch(`${GOOGLE_DRIVE_API}/${fileId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
 }
 
 export async function handleApiRequest(
@@ -103,24 +213,9 @@ export async function handleApiRequest(
         data.photoDataUrls || (photoDataUrl ? [photoDataUrl] : []);
       const driveIds: string[] = [];
 
-      // If there are base64 images and the user has a Google token, upload to Drive
       if (photoUrls.length > 0) {
-        const userRow = await env.DB.prepare(
-          "SELECT google_refresh_token FROM users WHERE id = ?",
-        )
-          .bind(userId)
-          .first();
-        if (userRow?.google_refresh_token) {
-          const oauth2Client = new google.auth.OAuth2(
-            env.GOOGLE_CLIENT_ID,
-            env.GOOGLE_CLIENT_SECRET,
-          );
-          oauth2Client.setCredentials({
-            refresh_token: userRow.google_refresh_token as string,
-          });
-
-          const drive = google.drive({ version: "v3", auth: oauth2Client });
-
+        const accessToken = await getDriveAccessToken(env, userId);
+        if (accessToken) {
           for (let i = 0; i < photoUrls.length; i++) {
             const urlStr = photoUrls[i];
             if (!urlStr.startsWith("data:image")) continue;
@@ -129,25 +224,16 @@ export async function handleApiRequest(
             if (matches) {
               const mimeType = matches[1];
               const base64Data = matches[2];
-              const buffer = Buffer.from(base64Data, "base64");
-              const stream = new PassThrough();
-              stream.end(buffer);
+              const filename = `momentstash_${id}_${date}_${i}.${mimeType.split("/")[1]}`;
 
               try {
-                const file = await drive.files.create({
-                  requestBody: {
-                    name: `momentstash_${id}_${date}_${i}.${mimeType.split("/")[1]}`,
-                    parents: ["appDataFolder"],
-                  },
-                  media: {
-                    mimeType,
-                    body: stream,
-                  },
-                  fields: "id",
-                });
-                if (file.data.id) {
-                  driveIds.push(file.data.id);
-                }
+                const fileId = await uploadToDrive(
+                  accessToken,
+                  base64Data,
+                  mimeType,
+                  filename,
+                );
+                if (fileId) driveIds.push(fileId);
               } catch (e) {
                 console.error(`Drive upload error for photo ${i}`, e);
               }
@@ -156,7 +242,7 @@ export async function handleApiRequest(
 
           if (driveIds.length > 0) {
             gdriveFileId = driveIds.join(",");
-            photoDataUrl = null; // Clear so we don't save massive base64 in D1
+            photoDataUrl = null;
           }
         }
       }
@@ -200,25 +286,12 @@ export async function handleApiRequest(
         .first();
 
       if (entry && entry.gdrive_file_id) {
-        const userRow = await env.DB.prepare(
-          "SELECT google_refresh_token FROM users WHERE id = ?",
-        )
-          .bind(userId)
-          .first();
-        if (userRow?.google_refresh_token) {
-          const oauth2Client = new google.auth.OAuth2(
-            env.GOOGLE_CLIENT_ID,
-            env.GOOGLE_CLIENT_SECRET,
-          );
-          oauth2Client.setCredentials({
-            refresh_token: userRow.google_refresh_token as string,
-          });
-          const drive = google.drive({ version: "v3", auth: oauth2Client });
-
+        const accessToken = await getDriveAccessToken(env, userId);
+        if (accessToken) {
           const ids = String(entry.gdrive_file_id).split(",");
           for (const fileId of ids) {
             try {
-              await drive.files.delete({ fileId: fileId.trim() });
+              await deleteDriveFile(accessToken, fileId.trim());
             } catch (e) {
               console.error(`Failed to delete Drive file ${fileId}`, e);
             }
@@ -232,7 +305,7 @@ export async function handleApiRequest(
       return new Response(JSON.stringify({ success: true }));
     }
 
-    // 2c. Update entry (for moving to a shelf or full text edit)
+    // 2c. Update entry
     if (path === "/api/entries" && request.method === "PUT") {
       if (!userId) return new Response("Unauthorized", { status: 401 });
       const data = (await request.json()) as any;
@@ -268,23 +341,18 @@ export async function handleApiRequest(
       if (!env.GOOGLE_CLIENT_ID) {
         return new Response("Missing Google Client ID", { status: 500 });
       }
-      const oauth2Client = new google.auth.OAuth2(
-        env.GOOGLE_CLIENT_ID,
-        env.GOOGLE_CLIENT_SECRET,
-        `${url.origin}/api/auth/callback`,
+
+      const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+      authUrl.searchParams.set("client_id", env.GOOGLE_CLIENT_ID);
+      authUrl.searchParams.set("redirect_uri", `${url.origin}/api/auth/callback`);
+      authUrl.searchParams.set("response_type", "code");
+      authUrl.searchParams.set("access_type", "offline");
+      authUrl.searchParams.set("prompt", "consent");
+      authUrl.searchParams.set("scope",
+        "https://www.googleapis.com/auth/drive.appdata profile email",
       );
 
-      const authUrl = oauth2Client.generateAuthUrl({
-        access_type: "offline",
-        prompt: "consent",
-        scope: [
-          "https://www.googleapis.com/auth/drive.appdata",
-          "profile",
-          "email",
-        ],
-      });
-
-      return Response.redirect(authUrl, 302);
+      return Response.redirect(authUrl.toString(), 302);
     }
 
     // 4. Google OAuth Callback
@@ -295,30 +363,35 @@ export async function handleApiRequest(
       const scope = url.searchParams.get("scope") || "";
       const grantedDrive = scope.includes("drive.appdata");
 
-      const oauth2Client = new google.auth.OAuth2(
-        env.GOOGLE_CLIENT_ID,
-        env.GOOGLE_CLIENT_SECRET,
-        `${url.origin}/api/auth/callback`,
+      const tokens = await tokenExchange(
+        new URLSearchParams({
+          code,
+          client_id: env.GOOGLE_CLIENT_ID,
+          client_secret: env.GOOGLE_CLIENT_SECRET,
+          redirect_uri: `${url.origin}/api/auth/callback`,
+          grant_type: "authorization_code",
+        }),
       );
 
-      const { tokens } = await oauth2Client.getToken(code);
-      oauth2Client.setCredentials(tokens);
-
-      const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
-      const { data } = await oauth2.userinfo.get();
+      const userResp = await fetch(GOOGLE_USERINFO_URL, {
+        headers: { Authorization: `Bearer ${tokens.access_token}` },
+      });
+      if (!userResp.ok) {
+        const text = await userResp.text();
+        throw new Error(`Userinfo error ${userResp.status}: ${text}`);
+      }
+      const data = await userResp.json();
 
       const googleId = data.id || "unknown";
       const email = data.email || "unknown@google.com";
       const name = data.name || "Stash User";
 
-      // Upsert user into D1
       const existing = await env.DB.prepare(
         "SELECT * FROM users WHERE email = ?",
       )
         .bind(email)
         .first();
 
-      // If they didn't grant Drive, clear any existing refresh token so the UI knows they don't have Drive linked
       const refreshToken = grantedDrive
         ? tokens.refresh_token || existing?.google_refresh_token || null
         : null;
@@ -385,17 +458,6 @@ export async function handleApiRequest(
     if (path === "/api/auth/me" && request.method === "DELETE") {
       if (!userId) return new Response("Unauthorized", { status: 401 });
 
-      const userRow = await env.DB.prepare(
-        "SELECT google_refresh_token FROM users WHERE id = ?",
-      )
-        .bind(userId)
-        .first();
-
-      // Optionally try to delete Drive files here, but since there could be many,
-      // the best effort is to delete local data. Google Drive folder will persist or can be manually deleted.
-      // Wait, we can fetch all drive IDs and attempt to delete them?
-      // It might take too long. Let's just delete the DB rows.
-
       await env.DB.prepare("DELETE FROM entries WHERE user_id = ?")
         .bind(userId)
         .run();
@@ -439,7 +501,6 @@ export async function handleApiRequest(
         .first();
       if (!entry) return new Response("Not found", { status: 404 });
 
-      // Fallback to photoDataUrl if it exists (legacy)
       if (
         entry.photoDataUrl &&
         String(entry.photoDataUrl).startsWith("data:")
@@ -448,8 +509,8 @@ export async function handleApiRequest(
           /^data:(image\/\w+);base64,(.+)$/,
         );
         if (matches) {
-          const buffer = Buffer.from(matches[2], "base64");
-          return new Response(buffer, {
+          const bytes = base64ToBytes(matches[2]);
+          return new Response(bytes, {
             headers: { "Content-Type": matches[1] },
           });
         }
@@ -463,52 +524,39 @@ export async function handleApiRequest(
         return new Response("Invalid index", { status: 400 });
       const targetFileId = ids[index].trim();
 
-      const userRow = await env.DB.prepare(
-        "SELECT google_refresh_token FROM users WHERE id = ?",
-      )
-        .bind(userId)
-        .first();
-      if (!userRow?.google_refresh_token)
+      const accessToken = await getDriveAccessToken(env, userId);
+      if (!accessToken)
         return new Response("No Drive auth", { status: 401 });
 
-      const oauth2Client = new google.auth.OAuth2(
-        env.GOOGLE_CLIENT_ID,
-        env.GOOGLE_CLIENT_SECRET,
+      const driveResp = await fetch(
+        `${GOOGLE_DRIVE_API}/${targetFileId}?alt=media`,
+        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
-      oauth2Client.setCredentials({
-        refresh_token: userRow.google_refresh_token as string,
-      });
+      if (!driveResp.ok) {
+        const text = await driveResp.text();
+        throw new Error(`Drive fetch error ${driveResp.status}: ${text}`);
+      }
 
-      const drive = google.drive({ version: "v3", auth: oauth2Client });
-
-      const res = await drive.files.get(
-        { fileId: targetFileId, alt: "media" },
-        { responseType: "stream" },
-      );
-
-      // Node stream to Web ReadableStream
-      const stream = new ReadableStream({
-        start(controller) {
-          res.data.on("data", (chunk) => controller.enqueue(chunk));
-          res.data.on("end", () => controller.close());
-          res.data.on("error", (err) => controller.error(err));
-        },
-      });
-
-      return new Response(stream, {
+      return new Response(driveResp.body, {
         headers: {
-          "Content-Type": res.headers["content-type"] || "image/jpeg",
+          "Content-Type": driveResp.headers.get("content-type") || "image/jpeg",
           "Cache-Control": "public, max-age=86400",
         },
       });
     }
 
     return new Response("API route not found", { status: 404 });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("API Error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        error: err instanceof Error ? err.message : "Unknown error",
+        stack: err instanceof Error ? err.stack : undefined,
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   }
 }

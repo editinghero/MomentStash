@@ -644,10 +644,10 @@ function HomePage() {
         `Scrapbook restored! Added ${addedCount} and updated ${updatedCount} memories. ✿`,
         { id: "zip-import" },
       );
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("ZIP Import failed:", err);
       toast.error(
-        `Failed to import: ${err.message || "Invalid or corrupt backup parcel."} ✿`,
+        `Failed to import: ${err instanceof Error ? err.message : "Unknown error"} ✿`,
         { id: "zip-import" },
       );
     } finally {

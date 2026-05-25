@@ -20,33 +20,41 @@ export async function loadEntries(): Promise<Entry[]> {
     const res = await fetch("/api/entries");
     if (!res.ok) throw new Error("Failed to load entries");
     const arr = await res.json();
-    return arr
-      .map((row: any) => {
-        const photos: string[] = [];
+    return (
+      arr
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .map((row: any) => {
+          const photos: string[] = [];
 
-        // Handle legacy single photo string or multiple Drive IDs
-        if (row.photoDataUrl && String(row.photoDataUrl).startsWith("data:")) {
-          photos.push(row.photoDataUrl);
-        } else if (row.gdrive_file_id) {
-          const ids = String(row.gdrive_file_id).split(",");
-          for (let i = 0; i < ids.length; i++) {
-            const idStr = ids[i].trim();
-            if (idStr) {
-              photos.push(`/api/photo?id=${row.id}&index=${i}`);
+          // Handle legacy single photo string or multiple Drive IDs
+          if (
+            row.photoDataUrl &&
+            String(row.photoDataUrl).startsWith("data:")
+          ) {
+            photos.push(row.photoDataUrl);
+          } else if (row.gdrive_file_id) {
+            const ids = String(row.gdrive_file_id).split(",");
+            for (let i = 0; i < ids.length; i++) {
+              const idStr = ids[i].trim();
+              if (idStr) {
+                photos.push(`/api/photo?id=${row.id}&index=${i}`);
+              }
             }
           }
-        }
 
-        return {
-          ...row,
-          tags:
-            typeof row.tags_json === "string" ? JSON.parse(row.tags_json) : [],
-          collection: row.collection_name,
-          createdAt: row.created_at,
-          photos: photos.length > 0 ? photos : undefined,
-        };
-      })
-      .sort((a: Entry, b: Entry) => b.createdAt - a.createdAt);
+          return {
+            ...row,
+            tags:
+              typeof row.tags_json === "string"
+                ? JSON.parse(row.tags_json)
+                : [],
+            collection: row.collection_name,
+            createdAt: row.created_at,
+            photos: photos.length > 0 ? photos : undefined,
+          };
+        })
+        .sort((a: Entry, b: Entry) => b.createdAt - a.createdAt)
+    );
   } catch (err) {
     console.error("loadEntries error:", err);
     return [];

@@ -11,10 +11,11 @@ export function Collage({
   onPhotoClick,
   className = "",
 }: CollageProps) {
-  if (!photos || photos.length === 0) return null;
+  const validPhotos = photos?.filter(Boolean) || [];
+  if (validPhotos.length === 0) return null;
 
   // Single photo
-  if (photos.length === 1) {
+  if (validPhotos.length === 1) {
     return (
       <div className={`mt-4 w-full ${className}`}>
         <button
@@ -23,7 +24,7 @@ export function Collage({
           className={`block w-full ${onPhotoClick ? "cursor-zoom-in" : "cursor-default"}`}
         >
           <img
-            src={photos[0]}
+            src={validPhotos[0]}
             alt=""
             className="w-full max-h-[350px] object-cover border-2 border-ink/85 shadow-sm collage-shape-1"
           />
@@ -33,7 +34,7 @@ export function Collage({
   }
 
   // Two photos
-  if (photos.length === 2) {
+  if (validPhotos.length === 2) {
     return (
       <div className={`mt-4 grid grid-cols-2 gap-2 ${className}`}>
         <button
@@ -42,7 +43,7 @@ export function Collage({
           className={onPhotoClick ? "cursor-zoom-in" : "cursor-default"}
         >
           <img
-            src={photos[0]}
+            src={validPhotos[0]}
             alt=""
             className="w-full h-40 object-cover border-2 border-ink/80 collage-shape-2"
           />
@@ -53,7 +54,7 @@ export function Collage({
           className={onPhotoClick ? "cursor-zoom-in" : "cursor-default"}
         >
           <img
-            src={photos[1]}
+            src={validPhotos[1]}
             alt=""
             className="w-full h-40 object-cover border-2 border-ink/80 collage-shape-3"
           />
@@ -63,7 +64,7 @@ export function Collage({
   }
 
   // Three photos
-  if (photos.length === 3) {
+  if (validPhotos.length === 3) {
     return (
       <div className={`mt-4 grid grid-cols-2 gap-2 ${className}`}>
         <button
@@ -72,7 +73,7 @@ export function Collage({
           className={`col-span-2 ${onPhotoClick ? "cursor-zoom-in" : "cursor-default"}`}
         >
           <img
-            src={photos[0]}
+            src={validPhotos[0]}
             alt=""
             className="w-full h-40 object-cover border-2 border-ink/80 collage-shape-1"
           />
@@ -83,7 +84,7 @@ export function Collage({
           className={onPhotoClick ? "cursor-zoom-in" : "cursor-default"}
         >
           <img
-            src={photos[1]}
+            src={validPhotos[1]}
             alt=""
             className="w-full h-32 object-cover border-2 border-ink/80 collage-shape-2"
           />
@@ -94,7 +95,7 @@ export function Collage({
           className={onPhotoClick ? "cursor-zoom-in" : "cursor-default"}
         >
           <img
-            src={photos[2]}
+            src={validPhotos[2]}
             alt=""
             className="w-full h-32 object-cover border-2 border-ink/80 collage-shape-3"
           />
@@ -112,7 +113,7 @@ export function Collage({
         className={onPhotoClick ? "cursor-zoom-in" : "cursor-default"}
       >
         <img
-          src={photos[0]}
+          src={validPhotos[0]}
           alt=""
           className="w-full h-32 object-cover border-2 border-ink/80 collage-shape-2"
         />
@@ -123,7 +124,7 @@ export function Collage({
         className={onPhotoClick ? "cursor-zoom-in" : "cursor-default"}
       >
         <img
-          src={photos[1]}
+          src={validPhotos[1]}
           alt=""
           className="w-full h-32 object-cover border-2 border-ink/80 collage-shape-3"
         />
@@ -134,7 +135,7 @@ export function Collage({
         className={onPhotoClick ? "cursor-zoom-in" : "cursor-default"}
       >
         <img
-          src={photos[2]}
+          src={validPhotos[2]}
           alt=""
           className="w-full h-32 object-cover border-2 border-ink/80 collage-shape-4"
         />
@@ -145,7 +146,7 @@ export function Collage({
         className={onPhotoClick ? "cursor-zoom-in" : "cursor-default"}
       >
         <img
-          src={photos[3]}
+          src={validPhotos[3]}
           alt=""
           className="w-full h-32 object-cover border-2 border-ink/80 collage-shape-1"
         />
