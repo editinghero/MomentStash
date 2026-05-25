@@ -497,8 +497,18 @@ function Footer() {
         <p className="font-display text-xl text-ink">
           Moment<span className="font-hand text-primary text-2xl">Stash</span>
         </p>
-        <p className="font-accent text-xs tracking-widest text-ink-soft uppercase">
-          made with paper, tape & care · © {new Date().getFullYear()}
+        <p className="font-accent text-xs tracking-widest text-ink-soft uppercase flex items-center gap-3">
+          <span>
+            made with paper, tape & care · © {new Date().getFullYear()}
+          </span>
+          <span>·</span>
+          <Link to="/privacy" className="hover:underline hover:text-primary">
+            Privacy Policy
+          </Link>
+          <span>·</span>
+          <Link to="/terms" className="hover:underline hover:text-primary">
+            Terms of Service
+          </Link>
         </p>
       </div>
     </footer>
