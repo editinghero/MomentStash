@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build && node -e \"try{require('fs').rmSync('.wrangler',{recursive:true,force:true})}catch(e){}\" && node -e \"try{require('fs').unlinkSync('dist/client/wrangler.json')}catch(e){}\" && npx esbuild dist/server/server.js --bundle --format=esm --outfile=dist/client/_worker.js \"--external:node:*\" \"--external:cloudflare:*\" --platform=neutral --main-fields=browser,module,main --conditions=workerd,worker,browser --alias:stream=node:stream --alias:events=node:events --alias:buffer=node:buffer --alias:util=node:util",
+    "build": "vite build && node -e \"try{require('fs').rmSync('.wrangler',{recursive:true,force:true})}catch(e){}\" && node -e \"try{require('fs').unlinkSync('dist/client/wrangler.json')}catch(e){}\" && npx esbuild src/entry-cloudflare.ts --bundle --format=esm --outfile=dist/client/_worker.js \"--external:node:*\" \"--external:cloudflare:*\" --platform=neutral --main-fields=browser,module,main --conditions=workerd,worker,browser --alias:stream=node:stream --alias:events=node:events --alias:buffer=node:buffer --alias:util=node:util --alias:child_process=node:child_process --alias:fs=node:fs --alias:querystring=node:querystring --alias:url=node:url --alias:path=node:path --alias:os=node:os --alias:http2=node:http2 --alias:zlib=node:zlib --alias:crypto=node:crypto --alias:net=node:net --alias:tls=node:tls --alias:assert=node:assert --alias:http=node:http --alias:https=node:https --alias:process=node:process",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
