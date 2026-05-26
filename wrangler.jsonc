@@ -8,7 +8,7 @@
     {
       "binding": "DB",
       "database_name": "momentstash-db",
-      "database_id": "e9eba725-b83d-4d0a-a94b-95bf93121383",
-    },
-  ],
+      "database_id": "e9eba725-b83d-4d0a-a94b-95bf93121383"
+    }
+  ]
 }
