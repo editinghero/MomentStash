@@ -30,7 +30,7 @@ During the test phase, send your login email to **astralquarks.entrust317@passfw
 ### 2. Connect Your Memories
 
 1. **Google Login**: Tap **Start Your Journey** and sign in using your authorized Google Account.
-2. **Authorize Drive (Optional)**: Grant app data permissions during sign-in to back up photos to your private Google Drive app folder.
+2. **Authorize Drive (Optional / Needed For Photos)**: Grant app data permissions during sign-in to back up photos to your private Google Drive app folder.
 3. **Capture Daily Magic**: Scribble notes, snap pictures, attach tags, and select emoji mood indicators!
 
 ### 3. Organize into Shelves
