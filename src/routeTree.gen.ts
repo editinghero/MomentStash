@@ -8,209 +8,209 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from "./routes/__root";
-import { Route as TermsRouteImport } from "./routes/terms";
-import { Route as PrivacyRouteImport } from "./routes/privacy";
-import { Route as LoginRouteImport } from "./routes/login";
-import { Route as AppRouteImport } from "./routes/_app";
-import { Route as IndexRouteImport } from "./routes/index";
-import { Route as AppTimelineRouteImport } from "./routes/_app/timeline";
-import { Route as AppHomeRouteImport } from "./routes/_app/home";
-import { Route as AppCreateRouteImport } from "./routes/_app/create";
-import { Route as AppCollectionsRouteImport } from "./routes/_app/collections";
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppTimelineRouteImport } from './routes/_app/timeline'
+import { Route as AppHomeRouteImport } from './routes/_app/home'
+import { Route as AppCreateRouteImport } from './routes/_app/create'
+import { Route as AppCollectionsRouteImport } from './routes/_app/collections'
 
 const TermsRoute = TermsRouteImport.update({
-  id: "/terms",
-  path: "/terms",
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const PrivacyRoute = PrivacyRouteImport.update({
-  id: "/privacy",
-  path: "/privacy",
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const LoginRoute = LoginRouteImport.update({
-  id: "/login",
-  path: "/login",
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AppRoute = AppRouteImport.update({
-  id: "/_app",
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const IndexRoute = IndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AppTimelineRoute = AppTimelineRouteImport.update({
-  id: "/timeline",
-  path: "/timeline",
+  id: '/timeline',
+  path: '/timeline',
   getParentRoute: () => AppRoute,
-} as any);
+} as any)
 const AppHomeRoute = AppHomeRouteImport.update({
-  id: "/home",
-  path: "/home",
+  id: '/home',
+  path: '/home',
   getParentRoute: () => AppRoute,
-} as any);
+} as any)
 const AppCreateRoute = AppCreateRouteImport.update({
-  id: "/create",
-  path: "/create",
+  id: '/create',
+  path: '/create',
   getParentRoute: () => AppRoute,
-} as any);
+} as any)
 const AppCollectionsRoute = AppCollectionsRouteImport.update({
-  id: "/collections",
-  path: "/collections",
+  id: '/collections',
+  path: '/collections',
   getParentRoute: () => AppRoute,
-} as any);
+} as any)
 
 export interface FileRoutesByFullPath {
-  "/": typeof IndexRoute;
-  "/login": typeof LoginRoute;
-  "/privacy": typeof PrivacyRoute;
-  "/terms": typeof TermsRoute;
-  "/collections": typeof AppCollectionsRoute;
-  "/create": typeof AppCreateRoute;
-  "/home": typeof AppHomeRoute;
-  "/timeline": typeof AppTimelineRoute;
+  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
+  '/collections': typeof AppCollectionsRoute
+  '/create': typeof AppCreateRoute
+  '/home': typeof AppHomeRoute
+  '/timeline': typeof AppTimelineRoute
 }
 export interface FileRoutesByTo {
-  "/": typeof IndexRoute;
-  "/login": typeof LoginRoute;
-  "/privacy": typeof PrivacyRoute;
-  "/terms": typeof TermsRoute;
-  "/collections": typeof AppCollectionsRoute;
-  "/create": typeof AppCreateRoute;
-  "/home": typeof AppHomeRoute;
-  "/timeline": typeof AppTimelineRoute;
+  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
+  '/collections': typeof AppCollectionsRoute
+  '/create': typeof AppCreateRoute
+  '/home': typeof AppHomeRoute
+  '/timeline': typeof AppTimelineRoute
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport;
-  "/": typeof IndexRoute;
-  "/_app": typeof AppRouteWithChildren;
-  "/login": typeof LoginRoute;
-  "/privacy": typeof PrivacyRoute;
-  "/terms": typeof TermsRoute;
-  "/_app/collections": typeof AppCollectionsRoute;
-  "/_app/create": typeof AppCreateRoute;
-  "/_app/home": typeof AppHomeRoute;
-  "/_app/timeline": typeof AppTimelineRoute;
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
+  '/_app/collections': typeof AppCollectionsRoute
+  '/_app/create': typeof AppCreateRoute
+  '/_app/home': typeof AppHomeRoute
+  '/_app/timeline': typeof AppTimelineRoute
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
+  fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | "/"
-    | "/login"
-    | "/privacy"
-    | "/terms"
-    | "/collections"
-    | "/create"
-    | "/home"
-    | "/timeline";
-  fileRoutesByTo: FileRoutesByTo;
+    | '/'
+    | '/login'
+    | '/privacy'
+    | '/terms'
+    | '/collections'
+    | '/create'
+    | '/home'
+    | '/timeline'
+  fileRoutesByTo: FileRoutesByTo
   to:
-    | "/"
-    | "/login"
-    | "/privacy"
-    | "/terms"
-    | "/collections"
-    | "/create"
-    | "/home"
-    | "/timeline";
+    | '/'
+    | '/login'
+    | '/privacy'
+    | '/terms'
+    | '/collections'
+    | '/create'
+    | '/home'
+    | '/timeline'
   id:
-    | "__root__"
-    | "/"
-    | "/_app"
-    | "/login"
-    | "/privacy"
-    | "/terms"
-    | "/_app/collections"
-    | "/_app/create"
-    | "/_app/home"
-    | "/_app/timeline";
-  fileRoutesById: FileRoutesById;
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/login'
+    | '/privacy'
+    | '/terms'
+    | '/_app/collections'
+    | '/_app/create'
+    | '/_app/home'
+    | '/_app/timeline'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute;
-  AppRoute: typeof AppRouteWithChildren;
-  LoginRoute: typeof LoginRoute;
-  PrivacyRoute: typeof PrivacyRoute;
-  TermsRoute: typeof TermsRoute;
+  IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
 }
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    "/terms": {
-      id: "/terms";
-      path: "/terms";
-      fullPath: "/terms";
-      preLoaderRoute: typeof TermsRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/privacy": {
-      id: "/privacy";
-      path: "/privacy";
-      fullPath: "/privacy";
-      preLoaderRoute: typeof PrivacyRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/login": {
-      id: "/login";
-      path: "/login";
-      fullPath: "/login";
-      preLoaderRoute: typeof LoginRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/_app": {
-      id: "/_app";
-      path: "";
-      fullPath: "/";
-      preLoaderRoute: typeof AppRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/": {
-      id: "/";
-      path: "/";
-      fullPath: "/";
-      preLoaderRoute: typeof IndexRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/_app/timeline": {
-      id: "/_app/timeline";
-      path: "/timeline";
-      fullPath: "/timeline";
-      preLoaderRoute: typeof AppTimelineRouteImport;
-      parentRoute: typeof AppRoute;
-    };
-    "/_app/home": {
-      id: "/_app/home";
-      path: "/home";
-      fullPath: "/home";
-      preLoaderRoute: typeof AppHomeRouteImport;
-      parentRoute: typeof AppRoute;
-    };
-    "/_app/create": {
-      id: "/_app/create";
-      path: "/create";
-      fullPath: "/create";
-      preLoaderRoute: typeof AppCreateRouteImport;
-      parentRoute: typeof AppRoute;
-    };
-    "/_app/collections": {
-      id: "/_app/collections";
-      path: "/collections";
-      fullPath: "/collections";
-      preLoaderRoute: typeof AppCollectionsRouteImport;
-      parentRoute: typeof AppRoute;
-    };
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/timeline': {
+      id: '/_app/timeline'
+      path: '/timeline'
+      fullPath: '/timeline'
+      preLoaderRoute: typeof AppTimelineRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/home': {
+      id: '/_app/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AppHomeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/create': {
+      id: '/_app/create'
+      path: '/create'
+      fullPath: '/create'
+      preLoaderRoute: typeof AppCreateRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/collections': {
+      id: '/_app/collections'
+      path: '/collections'
+      fullPath: '/collections'
+      preLoaderRoute: typeof AppCollectionsRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
-  AppCollectionsRoute: typeof AppCollectionsRoute;
-  AppCreateRoute: typeof AppCreateRoute;
-  AppHomeRoute: typeof AppHomeRoute;
-  AppTimelineRoute: typeof AppTimelineRoute;
+  AppCollectionsRoute: typeof AppCollectionsRoute
+  AppCreateRoute: typeof AppCreateRoute
+  AppHomeRoute: typeof AppHomeRoute
+  AppTimelineRoute: typeof AppTimelineRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -218,9 +218,9 @@ const AppRouteChildren: AppRouteChildren = {
   AppCreateRoute: AppCreateRoute,
   AppHomeRoute: AppHomeRoute,
   AppTimelineRoute: AppTimelineRoute,
-};
+}
 
-const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren);
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -228,17 +228,17 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PrivacyRoute: PrivacyRoute,
   TermsRoute: TermsRoute,
-};
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()
 
-import type { getRouter } from "./router.tsx";
-import type { startInstance } from "./start.ts";
-declare module "@tanstack/react-start" {
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
   interface Register {
-    ssr: true;
-    router: Awaited<ReturnType<typeof getRouter>>;
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>;
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }
