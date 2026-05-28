@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "momentstash",
+  "compatibility_date": "2025-09-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "pages_build_output_dir": "dist/client",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "momentstash-db",
+      "database_id": "e9eba725-b83d-4d0a-a94b-95bf93121383"
+    }
+  ]
+}
