@@ -111,7 +111,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         },
       ],
       links: [
-        { rel: "manifest", href: "/manifest.webmanifest" },
+        {
+          rel: "icon",
+          media: "(prefers-color-scheme: light)",
+          href: "/logo-192.png",
+          type: "image/png"
+        },
+        {
+          rel: "icon",
+          media: "(prefers-color-scheme: dark)",
+          href: "/logo-dark-192.png",
+          type: "image/png"
+        },
         {
           rel: "stylesheet",
           href: appCss,
@@ -133,6 +144,22 @@ function RootShell({ children }: { children: React.ReactNode }) {
         <script
           dangerouslySetInnerHTML={{
             __html: `
+              (function() {
+                var updateManifest = function() {
+                  var link = document.querySelector('link[rel="manifest"]');
+                  if (!link) {
+                    link = document.createElement('link');
+                    link.rel = 'manifest';
+                    document.head.appendChild(link);
+                  }
+                  link.href = window.matchMedia('(prefers-color-scheme: dark)').matches
+                    ? '/manifest-dark.webmanifest'
+                    : '/manifest-light.webmanifest';
+                };
+                updateManifest();
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateManifest);
+              })();
+
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
                   navigator.serviceWorker.register('/sw.js').then(
