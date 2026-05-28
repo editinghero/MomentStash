@@ -99,29 +99,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { property: "og:type", content: "website" },
         { name: "twitter:card", content: "summary" },
         { name: "twitter:site", content: "@MomentStash" },
-        {
-          name: "theme-color",
-          media: "(prefers-color-scheme: light)",
-          content: "#f6f5f3",
-        },
-        {
-          name: "theme-color",
-          media: "(prefers-color-scheme: dark)",
-          content: "#141414",
-        },
       ],
       links: [
         {
           rel: "icon",
           media: "(prefers-color-scheme: light)",
           href: "/logo-192.png",
-          type: "image/png"
+          type: "image/png",
         },
         {
           rel: "icon",
           media: "(prefers-color-scheme: dark)",
           href: "/logo-dark-192.png",
-          type: "image/png"
+          type: "image/png",
         },
         {
           rel: "stylesheet",
@@ -145,19 +135,50 @@ function RootShell({ children }: { children: React.ReactNode }) {
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
-                var updateManifest = function() {
-                  var link = document.querySelector('link[rel="manifest"]');
-                  if (!link) {
-                    link = document.createElement('link');
-                    link.rel = 'manifest';
-                    document.head.appendChild(link);
-                  }
-                  link.href = window.matchMedia('(prefers-color-scheme: dark)').matches
-                    ? '/manifest-dark.webmanifest'
-                    : '/manifest-light.webmanifest';
+                var getInitialTheme = function() {
+                  try {
+                    var saved = localStorage.getItem('momentstash_theme');
+                    if (saved === 'light' || saved === 'dark') return saved;
+                  } catch(e) {}
+                  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
                 };
-                updateManifest();
-                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateManifest);
+                var updateThemeElements = function(theme) {
+                  var isDark = theme === 'dark';
+
+                  var manifestLink = document.querySelector('link[rel="manifest"]');
+                  if (!manifestLink) {
+                    manifestLink = document.createElement('link');
+                    manifestLink.rel = 'manifest';
+                    document.head.appendChild(manifestLink);
+                  }
+                  manifestLink.href = isDark ? '/manifest-dark.webmanifest' : '/manifest-light.webmanifest';
+
+                  var themeMeta = document.querySelector('meta[name="theme-color"]');
+                  if (!themeMeta) {
+                    themeMeta = document.createElement('meta');
+                    themeMeta.name = 'theme-color';
+                    document.head.appendChild(themeMeta);
+                  }
+                  themeMeta.content = isDark ? '#141414' : '#f6f5f3';
+
+                  if (isDark) {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                  document.documentElement.style.colorScheme = theme;
+                };
+
+                var theme = getInitialTheme();
+                updateThemeElements(theme);
+
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+                  try {
+                    var saved = localStorage.getItem('momentstash_theme');
+                    if (saved === 'light' || saved === 'dark') return; // User preference overrides OS
+                  } catch(e) {}
+                  updateThemeElements(e.matches ? 'dark' : 'light');
+                });
               })();
 
               if ('serviceWorker' in navigator) {

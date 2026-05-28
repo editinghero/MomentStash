@@ -34,8 +34,31 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.toggle("dark", theme === "dark");
+    const isDark = theme === "dark";
+    root.classList.toggle("dark", isDark);
     root.style.colorScheme = theme;
+
+    let manifestLink = document.querySelector(
+      'link[rel="manifest"]',
+    ) as HTMLLinkElement | null;
+    if (!manifestLink) {
+      manifestLink = document.createElement("link");
+      manifestLink.rel = "manifest";
+      document.head.appendChild(manifestLink);
+    }
+    manifestLink.href = isDark
+      ? "/manifest-dark.webmanifest"
+      : "/manifest-light.webmanifest";
+
+    let themeMeta = document.querySelector(
+      'meta[name="theme-color"]',
+    ) as HTMLMetaElement | null;
+    if (!themeMeta) {
+      themeMeta = document.createElement("meta");
+      themeMeta.name = "theme-color";
+      document.head.appendChild(themeMeta);
+    }
+    themeMeta.content = isDark ? "#141414" : "#f6f5f3";
   }, [theme]);
 
   const setTheme = (t: Theme) => {
