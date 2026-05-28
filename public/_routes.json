@@ -6,7 +6,8 @@
     "/images/*",
     "/favicon.ico",
     "/*.png",
-    "/manifest.webmanifest",
+    "/manifest-light.webmanifest",
+    "/manifest-dark.webmanifest",
     "/sw.js"
   ]
 }
