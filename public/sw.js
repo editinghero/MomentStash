@@ -2,7 +2,8 @@ const CACHE_NAME = "momentstash-v1";
 
 const PRECACHE_ASSETS = [
   "/",
-  "/manifest.webmanifest",
+  "/manifest-light.webmanifest",
+  "/manifest-dark.webmanifest",
   "/logo-192.png",
   "/logo-512.png",
   "/logo-dark-192.png",

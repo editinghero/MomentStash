@@ -88,42 +88,11 @@ export default defineConfig({
         "logo-512.png",
         "logo-dark-192.png",
         "logo-dark-512.png",
+        "manifest-light.webmanifest",
+        "manifest-dark.webmanifest",
       ],
-      manifest: {
-        name: "MomentStash",
-        short_name: "MomentStash",
-        description:
-          "A digital scrapbook for your cafes, sunsets, and quiet moments.",
-        theme_color: "#f6f5f3",
-        background_color: "#f6f5f3",
-        display: "standalone",
-        icons: [
-          {
-            src: "logo-192.png",
-            sizes: "192x192",
-            type: "image/png",
-            purpose: "any",
-          },
-          {
-            src: "logo-512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "any",
-          },
-          {
-            src: "logo-dark-192.png",
-            sizes: "192x192",
-            type: "image/png",
-            purpose: "any",
-          },
-          {
-            src: "logo-dark-512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "any",
-          },
-        ],
-      },
+      manifest: false,
+      injectRegister: false,
     }),
   ],
 });
