@@ -1,8 +1,19 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { loadEntries } from "./entries";
 
 describe("loadEntries", () => {
+  const originalFetch = globalThis.fetch;
+  const originalConsoleError = console.error;
+
   beforeEach(() => {
+    // Mock console.error to avoid cluttering test output and to assert it was called
+    console.error = vi.fn();
+  });
+
+  afterEach(() => {
+    // Restore global fetch and console.error after each test
+    globalThis.fetch = originalFetch;
+    console.error = originalConsoleError;
     vi.restoreAllMocks();
   });
 
@@ -19,14 +30,14 @@ describe("loadEntries", () => {
       },
     ];
 
-    vi.spyOn(global, "fetch").mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockApiResponse,
     } as Response);
 
     const entries = await loadEntries();
 
-    expect(global.fetch).toHaveBeenCalledWith("/api/entries");
+    expect(globalThis.fetch).toHaveBeenCalledWith("/api/entries");
     expect(entries).toHaveLength(1);
     expect(entries[0]).toMatchObject({
       id: "1",
@@ -49,7 +60,7 @@ describe("loadEntries", () => {
       },
     ];
 
-    vi.spyOn(global, "fetch").mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockApiResponse,
     } as Response);
@@ -71,7 +82,7 @@ describe("loadEntries", () => {
       },
     ];
 
-    vi.spyOn(global, "fetch").mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockApiResponse,
     } as Response);
@@ -94,7 +105,7 @@ describe("loadEntries", () => {
       { id: "3", created_at: 2000 },
     ];
 
-    vi.spyOn(global, "fetch").mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockApiResponse,
     } as Response);
@@ -107,33 +118,35 @@ describe("loadEntries", () => {
     expect(entries[2].id).toBe("1"); // 1000
   });
 
-  it("should handle non-ok response by returning an empty array", async () => {
-    vi.spyOn(global, "fetch").mockResolvedValue({
-      ok: false,
-    } as Response);
+  it("should return an empty array and log error when fetch rejects", async () => {
+    const fetchError = new Error("Network error");
+    globalThis.fetch = vi.fn().mockRejectedValue(fetchError);
 
-    // Suppress console.error for this expected failure
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const result = await loadEntries();
 
-    const entries = await loadEntries();
-
-    expect(entries).toEqual([]);
-    expect(consoleSpy).toHaveBeenCalled();
-
-    consoleSpy.mockRestore();
+    expect(result).toEqual([]);
+    expect(console.error).toHaveBeenCalledWith(
+      "loadEntries error:",
+      fetchError,
+    );
   });
 
-  it("should handle fetch throwing an error by returning an empty array", async () => {
-    vi.spyOn(global, "fetch").mockRejectedValue(new Error("Network Error"));
+  it("should return an empty array and log error when fetch response is not ok", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+    });
 
-    // Suppress console.error for this expected failure
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const result = await loadEntries();
 
-    const entries = await loadEntries();
-
-    expect(entries).toEqual([]);
-    expect(consoleSpy).toHaveBeenCalled();
-
-    consoleSpy.mockRestore();
+    expect(result).toEqual([]);
+    expect(console.error).toHaveBeenCalledWith(
+      "loadEntries error:",
+      expect.any(Error),
+    );
+    expect(console.error).toHaveBeenCalledWith(
+      "loadEntries error:",
+      expect.objectContaining({ message: "Failed to load entries" }),
+    );
   });
 });
