@@ -104,20 +104,37 @@ async function signSession(userId: string, secret: string) {
   return `${userId}.${hex}`;
 }
 
-function constantTimeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let result = 0;
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-  return result === 0;
-}
-
 async function verifySession(cookie: string, secret: string) {
-  const [userId, hex] = cookie.split(".");
-  if (!userId || !hex) return null;
-  const expected = await signSession(userId, secret);
-  if (constantTimeEqual(cookie, expected)) return userId;
+  const parts = cookie.split(".");
+  if (parts.length !== 2) return null;
+  const [userId, hex] = parts;
+  if (!userId || !hex || hex.length !== 64) return null;
+
+  const signatureBytes = new Uint8Array(32);
+  for (let i = 0; i < 32; i++) {
+    const byteStr = hex.slice(i * 2, i * 2 + 2);
+    const parsed = parseInt(byteStr, 16);
+    if (isNaN(parsed)) return null;
+    signatureBytes[i] = parsed;
+  }
+
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["verify"],
+  );
+
+  const isValid = await crypto.subtle.verify(
+    "HMAC",
+    key,
+    signatureBytes,
+    encoder.encode(userId),
+  );
+
+  if (isValid) return userId;
   return null;
 }
 
