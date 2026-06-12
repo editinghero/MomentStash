@@ -335,13 +335,15 @@ export async function handleApiRequest(
         const accessToken = await getDriveAccessToken(env, userId);
         if (accessToken) {
           const ids = String(entry.gdrive_file_id).split(",");
-          for (const fileId of ids) {
-            try {
-              await deleteDriveFile(accessToken, fileId.trim());
-            } catch (e) {
-              console.error(`Failed to delete Drive file ${fileId}`, e);
-            }
-          }
+          await Promise.all(
+            ids.map(async (fileId) => {
+              try {
+                await deleteDriveFile(accessToken, fileId.trim());
+              } catch (e) {
+                console.error(`Failed to delete Drive file ${fileId}`, e);
+              }
+            }),
+          );
         }
       }
 
