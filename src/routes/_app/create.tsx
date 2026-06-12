@@ -64,7 +64,7 @@ const SUGGESTED = [
   "Friends",
 ];
 
-function CreatePage() {
+export function useCreatePageLogic() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -276,6 +276,86 @@ function CreatePage() {
     }
   };
 
+  return {
+    navigate,
+    user,
+    fileRef,
+    title,
+    setTitle,
+    note,
+    setNote,
+    mood,
+    setMood,
+    collection,
+    setCollection,
+    existingShelves,
+    setExistingShelves,
+    tagsRaw,
+    setTagsRaw,
+    allUsedTags,
+    setAllUsedTags,
+    place,
+    setPlace,
+    tape,
+    setTape,
+    date,
+    setDate,
+    photos,
+    setPhotos,
+    saving,
+    setSaving,
+    shelfMode,
+    setShelfMode,
+    alertConfig,
+    setAlertConfig,
+    previewRotate,
+    suggestions,
+    handleAddTag,
+    onPickPhotos,
+    removePhoto,
+    editId,
+    onSave,
+  };
+}
+
+function CreatePage() {
+  const logic = useCreatePageLogic();
+  const {
+    navigate,
+    user,
+    fileRef,
+    title,
+    setTitle,
+    note,
+    setNote,
+    mood,
+    setMood,
+    collection,
+    setCollection,
+    existingShelves,
+    tagsRaw,
+    setTagsRaw,
+    place,
+    setPlace,
+    tape,
+    setTape,
+    date,
+    setDate,
+    photos,
+    saving,
+    shelfMode,
+    setShelfMode,
+    alertConfig,
+    setAlertConfig,
+    previewRotate,
+    suggestions,
+    handleAddTag,
+    onPickPhotos,
+    removePhoto,
+    editId,
+    onSave,
+  } = logic;
+
   return (
     <main className="relative min-h-screen overflow-hidden pt-4 pb-44">
       <SparkleDoodle className="absolute top-20 left-8 h-6 w-6 text-secondary opacity-60" />
@@ -370,164 +450,26 @@ function CreatePage() {
           </div>
 
           <Field label="mood">
-            <div className="space-y-4">
-              {MOOD_CATEGORIES.map((cat) => (
-                <div key={cat.name} className="space-y-1.5">
-                  <span className="block font-hand text-lg text-ink-soft italic">
-                    {cat.name}
-                  </span>
-                  <div className="flex flex-wrap gap-2">
-                    {cat.items.map((item) => (
-                      <div key={item.emoji} className="relative group">
-                        <button
-                          type="button"
-                          onClick={() => setMood(item.emoji)}
-                          className={[
-                            "h-11 w-11 grid place-items-center rounded-full border-2 text-2xl transition-all cursor-pointer",
-                            mood === item.emoji
-                              ? "border-ink bg-accent shadow-[2px_2px_0_var(--color-ink)]"
-                              : "border-ink/40 bg-paper hover:border-ink",
-                          ].join(" ")}
-                        >
-                          {item.emoji}
-                        </button>
-                        {/* Custom Speech-bubble Tooltip */}
-                        <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-ink px-2.5 py-1 text-xs font-accent text-paper opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 uppercase tracking-wider">
-                          {item.label}
-                          <div className="absolute top-full left-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-0.5 rotate-45 bg-ink" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <MoodSelector mood={mood} setMood={setMood} />
           </Field>
 
           <Field label="shelf (optional)">
-            {/* Segmented Selection Tab */}
-            <div className="flex border-2 border-ink rounded-xl overflow-hidden mb-4 max-w-md bg-paper shadow-sm">
-              <button
-                type="button"
-                onClick={() => {
-                  setShelfMode("unsorted");
-                  setCollection("");
-                }}
-                className={[
-                  "flex-1 py-2 text-center font-accent text-xs uppercase tracking-wider transition-colors cursor-pointer",
-                  shelfMode === "unsorted"
-                    ? "bg-ink text-paper font-bold"
-                    : "bg-paper text-ink hover:bg-accent/30",
-                ].join(" ")}
-              >
-                Unsorted
-              </button>
-              {existingShelves.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShelfMode("existing");
-                    if (!collection || !existingShelves.includes(collection)) {
-                      setCollection(existingShelves[0]);
-                    }
-                  }}
-                  className={[
-                    "flex-1 py-2 text-center font-accent text-xs uppercase tracking-wider border-l-2 border-r-2 border-ink transition-colors cursor-pointer",
-                    shelfMode === "existing"
-                      ? "bg-ink text-paper font-bold"
-                      : "bg-paper text-ink hover:bg-accent/30",
-                  ].join(" ")}
-                >
-                  Select Shelf
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => {
-                  setShelfMode("new");
-                  setCollection(""); // Clear so placeholder shows up and typing is instant
-                }}
-                className={[
-                  "flex-1 py-2 text-center font-accent text-xs uppercase tracking-wider transition-colors cursor-pointer",
-                  shelfMode === "new"
-                    ? "bg-ink text-paper font-bold"
-                    : "bg-paper text-ink hover:bg-accent/30",
-                ].join(" ")}
-              >
-                Create Shelf
-              </button>
-            </div>
-
-            {/* Inner Content Based on Mode */}
-            {shelfMode === "unsorted" && (
-              <p className="font-hand text-lg text-ink-soft italic">
-                ✿ This memory will sit directly in your timeline without a
-                shelf.
-              </p>
-            )}
-
-            {shelfMode === "existing" && existingShelves.length > 0 && (
-              <div className="flex flex-wrap gap-2 p-3 bg-paper-deep/30 rounded-xl border border-ink/20 animate-fade-in">
-                {existingShelves.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => setCollection(s)}
-                    className={[
-                      "font-hand text-lg px-3 py-1 rounded-full border-2 transition-all cursor-pointer",
-                      collection === s
-                        ? "border-ink bg-primary text-primary-foreground shadow-[1px_1px_0_var(--color-ink)]"
-                        : "border-ink/40 bg-paper text-ink hover:border-ink",
-                    ].join(" ")}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {shelfMode === "new" && (
-              <div className="space-y-2 animate-fade-in">
-                <input
-                  required={shelfMode === "new"}
-                  value={collection}
-                  onChange={(e) => setCollection(e.target.value)}
-                  placeholder="name your custom shelf..."
-                  className="input-line"
-                />
-                <p className="font-hand text-base text-ink-soft">
-                  ✿ A fresh shelf will be carved for this memory.
-                </p>
-              </div>
-            )}
+            <ShelfSelector
+              shelfMode={shelfMode}
+              setShelfMode={setShelfMode}
+              collection={collection}
+              setCollection={setCollection}
+              existingShelves={existingShelves}
+            />
           </Field>
 
           <Field label="tags">
-            <div className="space-y-2">
-              <input
-                value={tagsRaw}
-                onChange={(e) => setTagsRaw(e.target.value)}
-                placeholder="coffee, slow, #morning"
-                className="input-line"
-              />
-              {suggestions.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  <span className="font-accent text-[10px] uppercase tracking-wider text-ink-soft self-center mr-1">
-                    Suggest:
-                  </span>
-                  {suggestions.map((tag) => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => handleAddTag(tag)}
-                      className="font-hand text-base px-2.5 py-0.5 rounded-full border border-ink/30 bg-paper hover:bg-accent/40 hover:border-ink transition-colors cursor-pointer text-ink-soft hover:text-ink"
-                    >
-                      #{tag}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <TagsInput
+              tagsRaw={tagsRaw}
+              setTagsRaw={setTagsRaw}
+              suggestions={suggestions}
+              handleAddTag={handleAddTag}
+            />
           </Field>
 
           <Field label="tape color">
@@ -551,67 +493,14 @@ function CreatePage() {
           </Field>
 
           <Field label="photo (optional)">
-            {!user?.gdriveLinked ? (
-              <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-ink/40 rounded-xl bg-paper-deep/20 text-center">
-                <HardDrive className="h-8 w-8 text-ink-soft mb-2 opacity-50" />
-                <p className="font-hand text-xl text-ink-soft mb-2">
-                  Drive not linked ✿
-                </p>
-                <p className="font-body text-sm text-ink-soft mb-4">
-                  Please connect your Google Drive to enable photo uploads.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => navigate({ to: "/home" })}
-                  className="font-hand text-lg border-2 border-ink px-4 py-1.5 rounded-full bg-paper hover:bg-accent cursor-pointer transition-colors"
-                >
-                  Go to settings
-                </button>
-              </div>
-            ) : (
-              <>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  hidden
-                  onChange={(e) => onPickPhotos(e.target.files)}
-                />
-
-                {photos.length > 0 && (
-                  <div className="flex flex-wrap gap-3 mb-3">
-                    {photos.map((src, idx) => (
-                      <div key={idx} className="relative inline-block">
-                        <img
-                          src={src}
-                          alt=""
-                          className="h-24 w-24 object-cover rounded-xl border-2 border-ink"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removePhoto(idx)}
-                          className="absolute -top-2 -right-2 h-6 w-6 grid place-items-center rounded-full bg-paper border-2 border-ink"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {photos.length < 4 && (
-                  <button
-                    type="button"
-                    onClick={() => fileRef.current?.click()}
-                    className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-ink/50 rounded-xl text-ink-soft font-hand text-xl hover:bg-accent/40 hover:border-ink transition-colors cursor-pointer w-full justify-center"
-                  >
-                    <Camera className="h-4 w-4" />{" "}
-                    {photos.length > 0 ? "add another photo" : "select photo"}
-                  </button>
-                )}
-              </>
-            )}
+            <PhotoUploader
+              user={user}
+              fileRef={fileRef}
+              photos={photos}
+              onPickPhotos={onPickPhotos}
+              removePhoto={removePhoto}
+              navigate={navigate}
+            />
           </Field>
 
           <div className="flex items-center gap-3 pt-2">
@@ -633,39 +522,16 @@ function CreatePage() {
           </div>
         </form>
 
-        {/* Live preview */}
-        <aside className="lg:sticky lg:top-6 self-start">
-          <p className="font-accent text-xs uppercase tracking-[0.2em] text-ink-soft mb-3">
-            how it will sit on the page
-          </p>
-          <article
-            className="relative paper-card rounded-2xl border-2 border-ink/80 p-5"
-            style={{ transform: `rotate(${previewRotate}deg)` }}
-          >
-            <WashiTape
-              color={tape}
-              rotate={-6}
-              width="5rem"
-              className="absolute -top-3 left-6"
-            />
-            <div className="flex items-start gap-2">
-              <span className="text-3xl">{mood}</span>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-display text-2xl text-ink leading-tight">
-                  {title || "your title here"}
-                </h3>
-                <p className="font-accent text-xs uppercase tracking-widest text-ink-soft mt-1 truncate">
-                  {collection || "Unsorted"}
-                  {place && ` · ${place}`}
-                </p>
-              </div>
-            </div>
-            <Collage photos={photos} className="w-full" />
-            <p className="font-body text-ink-soft mt-3 leading-relaxed">
-              {note || "a few words about the moment…"}
-            </p>
-          </article>
-        </aside>
+        <LivePreview
+          previewRotate={previewRotate}
+          tape={tape}
+          mood={mood}
+          title={title}
+          collection={collection}
+          place={place}
+          photos={photos}
+          note={note}
+        />
       </section>
 
       <style>{`
@@ -688,35 +554,7 @@ function CreatePage() {
       `}</style>
 
       {alertConfig && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in bg-black/40 backdrop-blur-xs">
-          <div
-            onClick={() => setAlertConfig(null)}
-            className="absolute inset-0 transition-opacity"
-          />
-          <div className="relative w-full max-w-md paper-card rounded-[24px] border-2 border-ink p-6 md:p-8 shadow-[var(--shadow-lift)] bg-paper animate-wobble-in flex flex-col z-50">
-            <WashiTape
-              color="pink"
-              rotate={-2}
-              width="5rem"
-              className="absolute -top-3.5 left-12 pointer-events-none"
-            />
-            <h4 className="font-display text-2xl text-ink font-bold mb-3">
-              {alertConfig.title}
-            </h4>
-            <p className="font-hand text-xl text-ink-soft mb-6 leading-relaxed">
-              {alertConfig.message}
-            </p>
-            <div className="flex items-center justify-end">
-              <button
-                type="button"
-                onClick={() => setAlertConfig(null)}
-                className="font-hand text-lg border-2 border-ink px-6 py-1.5 rounded-full bg-accent text-ink hover:bg-accent/80 cursor-pointer shadow-[2px_2px_0_var(--color-ink)] active:translate-y-0.5 transition-all font-bold"
-              >
-                Okay ✿
-              </button>
-            </div>
-          </div>
-        </div>
+        <AlertModal alertConfig={alertConfig} setAlertConfig={setAlertConfig} />
       )}
     </main>
   );
@@ -736,5 +574,375 @@ function Field({
       </span>
       {children}
     </label>
+  );
+}
+
+function MoodSelector({
+  mood,
+  setMood,
+}: {
+  mood: string;
+  setMood: (m: string) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      {MOOD_CATEGORIES.map((cat) => (
+        <div key={cat.name} className="space-y-1.5">
+          <span className="block font-hand text-lg text-ink-soft italic">
+            {cat.name}
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {cat.items.map((item) => (
+              <div key={item.emoji} className="relative group">
+                <button
+                  type="button"
+                  onClick={() => setMood(item.emoji)}
+                  className={[
+                    "h-11 w-11 grid place-items-center rounded-full border-2 text-2xl transition-all cursor-pointer",
+                    mood === item.emoji
+                      ? "border-ink bg-accent shadow-[2px_2px_0_var(--color-ink)]"
+                      : "border-ink/40 bg-paper hover:border-ink",
+                  ].join(" ")}
+                >
+                  {item.emoji}
+                </button>
+                <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-ink px-2.5 py-1 text-xs font-accent text-paper opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 uppercase tracking-wider">
+                  {item.label}
+                  <div className="absolute top-full left-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-0.5 rotate-45 bg-ink" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ShelfSelector({
+  shelfMode,
+  setShelfMode,
+  collection,
+  setCollection,
+  existingShelves,
+}: {
+  shelfMode: "unsorted" | "existing" | "new";
+  setShelfMode: (mode: "unsorted" | "existing" | "new") => void;
+  collection: string;
+  setCollection: (c: string) => void;
+  existingShelves: string[];
+}) {
+  return (
+    <>
+      <div className="flex border-2 border-ink rounded-xl overflow-hidden mb-4 max-w-md bg-paper shadow-sm">
+        <button
+          type="button"
+          onClick={() => {
+            setShelfMode("unsorted");
+            setCollection("");
+          }}
+          className={[
+            "flex-1 py-2 text-center font-accent text-xs uppercase tracking-wider transition-colors cursor-pointer",
+            shelfMode === "unsorted"
+              ? "bg-ink text-paper font-bold"
+              : "bg-paper text-ink hover:bg-accent/30",
+          ].join(" ")}
+        >
+          Unsorted
+        </button>
+        {existingShelves.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              setShelfMode("existing");
+              if (!collection || !existingShelves.includes(collection)) {
+                setCollection(existingShelves[0]);
+              }
+            }}
+            className={[
+              "flex-1 py-2 text-center font-accent text-xs uppercase tracking-wider border-l-2 border-r-2 border-ink transition-colors cursor-pointer",
+              shelfMode === "existing"
+                ? "bg-ink text-paper font-bold"
+                : "bg-paper text-ink hover:bg-accent/30",
+            ].join(" ")}
+          >
+            Select Shelf
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => {
+            setShelfMode("new");
+            setCollection("");
+          }}
+          className={[
+            "flex-1 py-2 text-center font-accent text-xs uppercase tracking-wider transition-colors cursor-pointer",
+            shelfMode === "new"
+              ? "bg-ink text-paper font-bold"
+              : "bg-paper text-ink hover:bg-accent/30",
+          ].join(" ")}
+        >
+          Create Shelf
+        </button>
+      </div>
+
+      {shelfMode === "unsorted" && (
+        <p className="font-hand text-lg text-ink-soft italic">
+          ✿ This memory will sit directly in your timeline without a shelf.
+        </p>
+      )}
+
+      {shelfMode === "existing" && existingShelves.length > 0 && (
+        <div className="flex flex-wrap gap-2 p-3 bg-paper-deep/30 rounded-xl border border-ink/20 animate-fade-in">
+          {existingShelves.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setCollection(s)}
+              className={[
+                "font-hand text-lg px-3 py-1 rounded-full border-2 transition-all cursor-pointer",
+                collection === s
+                  ? "border-ink bg-primary text-primary-foreground shadow-[1px_1px_0_var(--color-ink)]"
+                  : "border-ink/40 bg-paper text-ink hover:border-ink",
+              ].join(" ")}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {shelfMode === "new" && (
+        <div className="space-y-2 animate-fade-in">
+          <input
+            required={shelfMode === "new"}
+            value={collection}
+            onChange={(e) => setCollection(e.target.value)}
+            placeholder="name your custom shelf..."
+            className="input-line"
+          />
+          <p className="font-hand text-base text-ink-soft">
+            ✿ A fresh shelf will be carved for this memory.
+          </p>
+        </div>
+      )}
+    </>
+  );
+}
+
+function TagsInput({
+  tagsRaw,
+  setTagsRaw,
+  suggestions,
+  handleAddTag,
+}: {
+  tagsRaw: string;
+  setTagsRaw: (t: string) => void;
+  suggestions: string[];
+  handleAddTag: (t: string) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <input
+        value={tagsRaw}
+        onChange={(e) => setTagsRaw(e.target.value)}
+        placeholder="coffee, slow, #morning"
+        className="input-line"
+      />
+      {suggestions.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          <span className="font-accent text-[10px] uppercase tracking-wider text-ink-soft self-center mr-1">
+            Suggest:
+          </span>
+          {suggestions.map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => handleAddTag(tag)}
+              className="font-hand text-base px-2.5 py-0.5 rounded-full border border-ink/30 bg-paper hover:bg-accent/40 hover:border-ink transition-colors cursor-pointer text-ink-soft hover:text-ink"
+            >
+              #{tag}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PhotoUploader({
+  user,
+  fileRef,
+  photos,
+  onPickPhotos,
+  removePhoto,
+  navigate,
+}: {
+  user: { gdriveLinked?: boolean } | null;
+  fileRef: React.RefObject<HTMLInputElement>;
+  photos: string[];
+  onPickPhotos: (files: FileList | null) => void;
+  removePhoto: (index: number) => void;
+  navigate: (opts: { to: string }) => void;
+}) {
+  return (
+    <>
+      {!user?.gdriveLinked ? (
+        <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-ink/40 rounded-xl bg-paper-deep/20 text-center">
+          <HardDrive className="h-8 w-8 text-ink-soft mb-2 opacity-50" />
+          <p className="font-hand text-xl text-ink-soft mb-2">
+            Drive not linked ✿
+          </p>
+          <p className="font-body text-sm text-ink-soft mb-4">
+            Please connect your Google Drive to enable photo uploads.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate({ to: "/home" })}
+            className="font-hand text-lg border-2 border-ink px-4 py-1.5 rounded-full bg-paper hover:bg-accent cursor-pointer transition-colors"
+          >
+            Go to settings
+          </button>
+        </div>
+      ) : (
+        <>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            multiple
+            hidden
+            onChange={(e) => onPickPhotos(e.target.files)}
+          />
+
+          {photos.length > 0 && (
+            <div className="flex flex-wrap gap-3 mb-3">
+              {photos.map((src, idx) => (
+                <div key={idx} className="relative inline-block">
+                  <img
+                    src={src}
+                    alt=""
+                    className="h-24 w-24 object-cover rounded-xl border-2 border-ink"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(idx)}
+                    className="absolute -top-2 -right-2 h-6 w-6 grid place-items-center rounded-full bg-paper border-2 border-ink"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {photos.length < 4 && (
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-ink/50 rounded-xl text-ink-soft font-hand text-xl hover:bg-accent/40 hover:border-ink transition-colors cursor-pointer w-full justify-center"
+            >
+              <Camera className="h-4 w-4" />{" "}
+              {photos.length > 0 ? "add another photo" : "select photo"}
+            </button>
+          )}
+        </>
+      )}
+    </>
+  );
+}
+
+function LivePreview({
+  previewRotate,
+  tape,
+  mood,
+  title,
+  collection,
+  place,
+  photos,
+  note,
+}: {
+  previewRotate: number;
+  tape: string;
+  mood: string;
+  title: string;
+  collection: string;
+  place: string;
+  photos: string[];
+  note: string;
+}) {
+  return (
+    <aside className="lg:sticky lg:top-6 self-start">
+      <p className="font-accent text-xs uppercase tracking-[0.2em] text-ink-soft mb-3">
+        how it will sit on the page
+      </p>
+      <article
+        className="relative paper-card rounded-2xl border-2 border-ink/80 p-5"
+        style={{ transform: `rotate(${previewRotate}deg)` }}
+      >
+        <WashiTape
+          color={tape}
+          rotate={-6}
+          width="5rem"
+          className="absolute -top-3 left-6"
+        />
+        <div className="flex items-start gap-2">
+          <span className="text-3xl">{mood}</span>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-display text-2xl text-ink leading-tight">
+              {title || "your title here"}
+            </h3>
+            <p className="font-accent text-xs uppercase tracking-widest text-ink-soft mt-1 truncate">
+              {collection || "Unsorted"}
+              {place && ` · ${place}`}
+            </p>
+          </div>
+        </div>
+        <Collage photos={photos} className="w-full" />
+        <p className="font-body text-ink-soft mt-3 leading-relaxed">
+          {note || "a few words about the moment…"}
+        </p>
+      </article>
+    </aside>
+  );
+}
+
+function AlertModal({
+  alertConfig,
+  setAlertConfig,
+}: {
+  alertConfig: { title: string; message: string };
+  setAlertConfig: (c: null) => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in bg-black/40 backdrop-blur-xs">
+      <div
+        onClick={() => setAlertConfig(null)}
+        className="absolute inset-0 transition-opacity"
+      />
+      <div className="relative w-full max-w-md paper-card rounded-[24px] border-2 border-ink p-6 md:p-8 shadow-[var(--shadow-lift)] bg-paper animate-wobble-in flex flex-col z-50">
+        <WashiTape
+          color="pink"
+          rotate={-2}
+          width="5rem"
+          className="absolute -top-3.5 left-12 pointer-events-none"
+        />
+        <h4 className="font-display text-2xl text-ink font-bold mb-3">
+          {alertConfig.title}
+        </h4>
+        <p className="font-hand text-xl text-ink-soft mb-6 leading-relaxed">
+          {alertConfig.message}
+        </p>
+        <div className="flex items-center justify-end">
+          <button
+            type="button"
+            onClick={() => setAlertConfig(null)}
+            className="font-hand text-lg border-2 border-ink px-6 py-1.5 rounded-full bg-accent text-ink hover:bg-accent/80 cursor-pointer shadow-[2px_2px_0_var(--color-ink)] active:translate-y-0.5 transition-all font-bold"
+          >
+            Okay ✿
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
