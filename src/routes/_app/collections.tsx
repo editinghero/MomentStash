@@ -428,10 +428,8 @@ function CollectionsPage() {
         const { saveCustomShelves } = await import("@/lib/entries");
         await saveCustomShelves(updatedCustom);
 
-        const allEntries = await loadEntries();
-        const toDelete = allEntries.filter((e) => e.collection === shelfName);
-        const { removeEntry } = await import("@/lib/entries");
-        await Promise.all(toDelete.map((e) => removeEntry(e.id)));
+        const { removeCollectionEntries } = await import("@/lib/entries");
+        await removeCollectionEntries(shelfName);
 
         const updatedEntries = await loadEntries();
         setEntries(updatedEntries);

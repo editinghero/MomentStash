@@ -75,6 +75,21 @@ export async function addEntry(entry: Entry): Promise<boolean> {
   }
 }
 
+export async function removeCollectionEntries(
+  collection: string,
+): Promise<boolean> {
+  try {
+    const res = await fetch(
+      `/api/entries?collection=${encodeURIComponent(collection)}`,
+      { method: "DELETE" },
+    );
+    return res.ok;
+  } catch (err) {
+    console.error("Failed to delete collection entries:", err);
+    return false;
+  }
+}
+
 export async function updateEntry(entry: Entry): Promise<boolean> {
   try {
     const res = await fetch("/api/entries", {

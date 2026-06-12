@@ -341,33 +341,71 @@ export async function handleApiRequest(
     if (path === "/api/entries" && request.method === "DELETE") {
       if (!userId) return new Response("Unauthorized", { status: 401 });
       const id = url.searchParams.get("id");
+      const collection = url.searchParams.get("collection");
 
-      const entry = await env.DB.prepare(
-        "SELECT gdrive_file_id FROM entries WHERE id = ? AND user_id = ?",
-      )
-        .bind(id, userId)
-        .first();
+      if (collection !== null) {
+        const entries = await env.DB.prepare(
+          "SELECT gdrive_file_id FROM entries WHERE collection_name = ? AND user_id = ?",
+        )
+          .bind(collection, userId)
+          .all();
 
-      if (entry && entry.gdrive_file_id) {
         const accessToken = await getDriveAccessToken(env, userId);
         if (accessToken) {
-          const ids = String(entry.gdrive_file_id).split(",");
-          await Promise.all(
-            ids.map(async (fileId) => {
-              try {
-                await deleteDriveFile(accessToken, fileId.trim());
-              } catch (e) {
-                console.error(`Failed to delete Drive file ${fileId}`, e);
+          const deletePromises: Promise<void>[] = [];
+          for (const entry of entries.results) {
+            if (entry.gdrive_file_id) {
+              const ids = String(entry.gdrive_file_id).split(",");
+              for (const fileId of ids) {
+                deletePromises.push(
+                  deleteDriveFile(accessToken, fileId.trim()).catch((e) => {
+                    console.error(`Failed to delete Drive file ${fileId}`, e);
+                  }),
+                );
               }
-            }),
-          );
+            }
+          }
+          await Promise.all(deletePromises);
         }
+
+        await env.DB.prepare(
+          "DELETE FROM entries WHERE collection_name = ? AND user_id = ?",
+        )
+          .bind(collection, userId)
+          .run();
+        return new Response(JSON.stringify({ success: true }));
       }
 
-      await env.DB.prepare("DELETE FROM entries WHERE id = ? AND user_id = ?")
-        .bind(id, userId)
-        .run();
-      return new Response(JSON.stringify({ success: true }));
+      if (id) {
+        const entry = await env.DB.prepare(
+          "SELECT gdrive_file_id FROM entries WHERE id = ? AND user_id = ?",
+        )
+          .bind(id, userId)
+          .first();
+
+        if (entry && entry.gdrive_file_id) {
+          const accessToken = await getDriveAccessToken(env, userId);
+          if (accessToken) {
+            const ids = String(entry.gdrive_file_id).split(",");
+            await Promise.all(
+              ids.map(async (fileId) => {
+                try {
+                  await deleteDriveFile(accessToken, fileId.trim());
+                } catch (e) {
+                  console.error(`Failed to delete Drive file ${fileId}`, e);
+                }
+              }),
+            );
+          }
+        }
+
+        await env.DB.prepare("DELETE FROM entries WHERE id = ? AND user_id = ?")
+          .bind(id, userId)
+          .run();
+        return new Response(JSON.stringify({ success: true }));
+      }
+
+      return new Response("No id or collection provided", { status: 400 });
     }
 
     // 2c. Update entry
