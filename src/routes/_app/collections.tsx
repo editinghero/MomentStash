@@ -574,665 +574,75 @@ function CollectionsPage() {
           />
 
           {/* LEFT PAGE - COLLECTIONS */}
-          <div className="p-6 md:p-8 relative min-h-[450px] lg:min-h-0 lg:h-full border-b lg:border-b-0 lg:border-r border-ink/30 flex flex-col justify-between overflow-hidden">
-            <div className="flex-1 min-h-0 flex flex-col justify-start">
-              <div className="flex items-center justify-between mb-6 shrink-0">
-                <h2 className="font-display text-2xl text-ink flex items-center gap-2">
-                  <FolderHeart className="h-5 w-5 text-primary" /> My Shelves
-                </h2>
-                <button
-                  onClick={handleCreateShelf}
-                  className="font-hand text-lg border-2 border-ink px-3.5 py-1 rounded-full bg-accent hover:bg-accent/80 text-ink shadow-[2px_2px_0_var(--color-ink)] active:translate-y-0.5 transition-all cursor-pointer font-bold"
-                >
-                  + New Shelf
-                </button>
-              </div>
-
-              {collections.length === 0 ? (
-                <p className="font-hand text-2xl text-ink-soft text-center mt-10">
-                  no shelves yet — fold a moment first ✿
-                </p>
-              ) : (
-                <div className="-m-4 grid grid-cols-1 gap-6 overflow-visible p-4 pt-10 pb-6 sm:grid-cols-2 lg:min-h-0 lg:flex-1 lg:overflow-y-auto subtle-scroll">
-                  {collections.map(([name, items], idx) => {
-                    const tape = tapeFor[idx % tapeFor.length];
-                    const cover = items.find(
-                      (e) => e.photos && e.photos.length > 0,
-                    );
-                    const rotate =
-                      (idx % 2 === 0 ? -1 : 1) * (1 + (idx % 3) * 0.4);
-                    const isHovered = hoveredShelf === name;
-                    return (
-                      <button
-                        key={name}
-                        onMouseEnter={() => setHoveredShelf(name)}
-                        onMouseLeave={() => setHoveredShelf(null)}
-                        onClick={() =>
-                          setOpenCollection((cur) =>
-                            cur === name ? null : name,
-                          )
-                        }
-                        onContextMenu={(e) => {
-                          e.preventDefault();
-                          setContextMenu({
-                            x: e.clientX,
-                            y: e.clientY,
-                            type: "shelf",
-                            targetId: name,
-                          });
-                        }}
-                        className={[
-                          "text-left relative paper-card rounded-xl border-2 p-4 transition-all cursor-pointer h-fit",
-                          openCollection === name
-                            ? "border-primary bg-primary-soft/10 shadow-[var(--shadow-paper)] z-10"
-                            : isHovered
-                              ? "border-ink/80 bg-accent/20 shadow-[var(--shadow-paper)] z-10"
-                              : "border-ink/80 z-0",
-                        ].join(" ")}
-                        style={{
-                          transform: `rotate(${rotate}deg) ${isHovered ? "scale(1.04) translateY(-5px)" : "scale(1) translateY(0)"}`,
-                          transition:
-                            "transform 0.2s ease, border-width 0.1s ease, box-shadow 0.2s ease",
-                        }}
-                      >
-                        <WashiTape
-                          color={tape}
-                          rotate={-6}
-                          width="4rem"
-                          className="absolute -top-2 left-6"
-                        />
-                        {cover?.photos && cover.photos.length > 0 ? (
-                          <img
-                            src={cover.photos[0]}
-                            alt=""
-                            className="w-full h-24 object-cover rounded-lg border border-ink/40"
-                          />
-                        ) : (
-                          <div className="w-full h-24 rounded-lg border border-ink/40 bg-paper-deep/60 grid place-items-center">
-                            <span className="text-4xl">
-                              {items[0]?.mood ?? "✿"}
-                            </span>
-                          </div>
-                        )}
-                        <div className="flex items-end justify-between mt-2.5">
-                          <div className="min-w-0">
-                            <h3 className="font-display text-lg text-ink leading-tight truncate">
-                              {name}
-                            </h3>
-                            <p className="font-hand text-base text-ink-soft">
-                              {items.length}{" "}
-                              {items.length === 1 ? "fold" : "folds"}
-                            </p>
-                          </div>
-                          <HeartDoodle className="h-4 w-4 text-primary opacity-60 shrink-0" />
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Left Page Bottom / Organic Tape style spacer */}
-            <div className="mt-8 border-t border-dashed border-ink/20 pt-4 flex items-center justify-between text-xs text-ink-soft uppercase font-accent tracking-widest shrink-0">
-              <span>MomentStash © 2026</span>
-              <span>Keep details close</span>
-            </div>
-          </div>
+          <CollectionsList
+            collections={collections}
+            handleCreateShelf={handleCreateShelf}
+            hoveredShelf={hoveredShelf}
+            setHoveredShelf={setHoveredShelf}
+            openCollection={openCollection}
+            setOpenCollection={setOpenCollection}
+            setContextMenu={setContextMenu}
+          />
 
           {/* RIGHT PAGE - CALENDAR */}
-          <div className="p-6 md:p-8 relative min-h-[450px] lg:min-h-0 lg:h-full flex flex-col justify-between overflow-hidden">
-            <div className="flex-1 min-h-0 flex flex-col justify-start">
-              <div className="flex items-center justify-between gap-4 mb-6 flex-wrap shrink-0">
-                <h2 className="font-display text-2xl text-ink flex items-center gap-2">
-                  <CalendarIcon className="h-5 w-5 text-primary" /> Calendar
-                </h2>
-                <div className="flex items-center gap-2">
-                  <CalNavBtn
-                    onClick={() => setMonth(addMonths(month, -1))}
-                    dir="left"
-                  />
-                  <span className="font-hand text-xl text-ink min-w-[8rem] text-center font-bold">
-                    {month.toLocaleDateString(undefined, {
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </span>
-                  <CalNavBtn
-                    onClick={() => setMonth(addMonths(month, 1))}
-                    dir="right"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-7 gap-1.5 mb-2 shrink-0">
-                {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-                  <div
-                    key={i}
-                    className="text-center font-accent text-xs font-bold uppercase tracking-widest text-ink-soft"
-                  >
-                    {d}
-                  </div>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-7 gap-1.5 overflow-visible pr-1 lg:min-h-0 lg:flex-1 lg:overflow-y-auto subtle-scroll">
-                {buildMonthCells(month).map((cell, i) => {
-                  if (!cell) return <div key={i} />;
-                  const iso = isoDate(cell);
-                  const has = datesWithEntries.has(iso);
-                  const isSelected = selectedDate === iso;
-                  const isToday = iso === isoDate(new Date());
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => setSelectedDate(isSelected ? null : iso)}
-                      className={[
-                        "aspect-square rounded-xl border-2 flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer relative h-fit",
-                        isSelected
-                          ? "bg-primary text-primary-foreground border-ink shadow-[2px_2px_0_var(--color-ink)]"
-                          : isToday
-                            ? "bg-accent border-ink text-accent-foreground"
-                            : "border-ink/40 bg-paper/40 hover:border-ink",
-                      ].join(" ")}
-                    >
-                      <span className="font-accent text-xs font-bold leading-none">
-                        {cell.getDate()}
-                      </span>
-                      {has && (
-                        <span
-                          className={[
-                            "h-1.5 w-1.5 rounded-full absolute bottom-1",
-                            isSelected ? "bg-primary-foreground" : "bg-primary",
-                          ].join(" ")}
-                        />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Doodles at the very bottom right of the page */}
-            <div className="mt-8 pt-4 flex justify-between items-end relative pointer-events-none shrink-0">
-              <div className="flex items-end shrink-0 z-0">
-                <PlantDoodle1 />
-                <PlantDoodle2 />
-              </div>
-              <div className="shrink-0 z-0 pr-2 pb-1">
-                <CoffeeDoodle />
-              </div>
-            </div>
-          </div>
+          <CalendarView
+            month={month}
+            setMonth={setMonth}
+            datesWithEntries={datesWithEntries}
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
+          />
         </div>
       </section>
 
       {/* Expanded shelve/collection details panel */}
-      {openCollection && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            onClick={() => setOpenCollection(null)}
-            className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity animate-fade-in"
-          />
-          <div className="relative w-full max-w-4xl paper-card rounded-[32px] border-2 border-ink p-6 md:p-8 shadow-[var(--shadow-lift)] max-h-[85vh] flex flex-col animate-wobble-in">
-            <WashiTape
-              color="lavender"
-              rotate={-3}
-              width="6rem"
-              className="absolute -top-3 left-12"
-            />
-            <button
-              onClick={() => setOpenCollection(null)}
-              className="absolute top-4 right-4 h-8 w-8 grid place-items-center rounded-full border-2 border-ink bg-paper text-ink hover:bg-accent cursor-pointer transition-colors font-hand text-xl z-10"
-            >
-              ✕
-            </button>
-            <div className="flex items-center gap-3 mb-4 pr-8 shrink-0">
-              <h3 className="font-display text-3xl text-ink font-bold leading-none truncate">
-                {openCollection}
-              </h3>
-              <ArrowSquiggle className="h-5 w-12 text-secondary shrink-0" />
-            </div>
-
-            <div className="flex-1 overflow-y-auto subtle-scroll pr-1 mt-4 pt-2 px-1 -mx-1">
-              {entries.filter((e) => e.collection === openCollection).length ===
-              0 ? (
-                <p className="font-hand text-2xl text-ink-soft text-center py-12">
-                  this shelf is empty ✿
-                </p>
-              ) : (
-                <ul className="grid gap-6 sm:grid-cols-2 pb-12">
-                  {entries
-                    .filter((e) => e.collection === openCollection)
-                    .map((e) => (
-                      <li
-                        key={e.id}
-                        onClick={(evt) => {
-                          evt.stopPropagation();
-                          setActiveEntry(e);
-                        }}
-                        onContextMenu={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          setContextMenu({
-                            x: event.clientX,
-                            y: event.clientY,
-                            type: "note",
-                            targetId: e.id,
-                          });
-                        }}
-                        className="rounded-2xl border-2 border-ink/60 bg-paper p-5 shadow-sm hover:shadow-[var(--shadow-paper)] hover:bg-accent/10 transition-all duration-200 relative cursor-pointer"
-                      >
-                        <WashiTape
-                          color={e.tape}
-                          rotate={2}
-                          width="3.5rem"
-                          className="absolute -top-2.5 right-6"
-                        />
-                        {e.photos && e.photos.length > 0 && (
-                          <div className="mb-4">
-                            <Collage photos={e.photos} />
-                          </div>
-                        )}
-                        <div className="flex items-start gap-3">
-                          <span className="text-3xl leading-none shrink-0">
-                            {e.mood}
-                          </span>
-                          <div className="min-w-0">
-                            <p className="font-display text-xl text-ink font-bold leading-tight truncate">
-                              {e.title}
-                            </p>
-                            <p className="font-hand text-lg text-ink-soft leading-none mt-1">
-                              {e.date}
-                              {e.place && (
-                                <>
-                                  {" · "}
-                                  <MapPin className="inline h-3.5 w-3.5 -mt-0.5 text-primary" />{" "}
-                                  {e.place}
-                                </>
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                        <p className="font-body text-sm text-ink-soft mt-3.5 leading-relaxed">
-                          {e.note.length > 120
-                            ? e.note.slice(0, 120) + "…"
-                            : e.note}
-                        </p>
-                      </li>
-                    ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <ExpandedShelfPanel
+        openCollection={openCollection}
+        setOpenCollection={setOpenCollection}
+        entries={entries}
+        setActiveEntry={setActiveEntry}
+        setContextMenu={setContextMenu}
+      />
 
       {/* Selected Date Entry Details Panel */}
-      {selectedDate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            onClick={() => setSelectedDate(null)}
-            className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity animate-fade-in"
-          />
-          <div className="relative w-full max-w-3xl paper-card rounded-[32px] border-2 border-ink p-6 md:p-8 shadow-[var(--shadow-lift)] max-h-[85vh] flex flex-col animate-wobble-in">
-            <WashiTape
-              color="yellow"
-              rotate={4}
-              width="5rem"
-              className="absolute -top-3 right-12"
-            />
-            <button
-              onClick={() => setSelectedDate(null)}
-              className="absolute top-4 right-4 h-8 w-8 grid place-items-center rounded-full border-2 border-ink bg-paper text-ink hover:bg-accent cursor-pointer transition-colors font-hand text-xl z-10"
-            >
-              ✕
-            </button>
-            <div className="border-b-2 border-dashed border-ink/30 pb-3 mb-4 pr-8 shrink-0">
-              <p className="font-hand text-3xl text-ink font-bold leading-none">
-                {new Date(selectedDate + "T00:00").toLocaleDateString(
-                  undefined,
-                  {
-                    weekday: "long",
-                    month: "long",
-                    day: "numeric",
-                  },
-                )}
-              </p>
-            </div>
-
-            <div className="flex-1 overflow-y-auto subtle-scroll pr-1 mt-2 pt-2 px-1 -mx-1">
-              {selectedEntries.length === 0 ? (
-                <p className="font-hand text-2xl text-ink-soft text-center py-6">
-                  no folds for this day — perhaps a quiet one ✿
-                </p>
-              ) : (
-                <ul className="grid gap-6 sm:grid-cols-2">
-                  {selectedEntries.map((e) => (
-                    <li
-                      key={e.id}
-                      onClick={() => {
-                        setSelectedDate(null);
-                        setActiveEntry(e);
-                      }}
-                      onContextMenu={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        setContextMenu({
-                          x: event.clientX,
-                          y: event.clientY,
-                          type: "note",
-                          targetId: e.id,
-                        });
-                      }}
-                      className="flex items-start gap-4 rounded-xl border border-ink/40 bg-paper-deep/35 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
-                    >
-                      {e.photos && e.photos.length > 0 && (
-                        <div className="shrink-0 h-16 w-16 md:h-20 md:w-20 rounded-lg overflow-hidden border border-ink/30">
-                          <img
-                            src={e.photos[0]}
-                            alt=""
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      )}
-                      <span className="text-3xl leading-none shrink-0 mt-1">
-                        {e.mood}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="font-display text-lg text-ink font-bold leading-tight">
-                          {e.title}
-                        </p>
-                        <p className="font-hand text-base text-ink-soft leading-none mt-1">
-                          {e.collection || "Unsorted"}
-                        </p>
-                        <p className="font-body text-sm text-ink-soft mt-3.5 leading-relaxed">
-                          {e.note.length > 120
-                            ? e.note.slice(0, 120) + "…"
-                            : e.note}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <SelectedDatePanel
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        selectedEntries={selectedEntries}
+        setActiveEntry={setActiveEntry}
+        setContextMenu={setContextMenu}
+      />
 
       {/* Universal Memory Detail Popup Modal — Joint Scrollable */}
-      {activeEntry && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
-          <div
-            onClick={() => setActiveEntry(null)}
-            className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity"
-          />
-          <div className="relative w-full max-w-2xl paper-card rounded-[32px] border-2 border-ink p-6 md:p-8 shadow-[var(--shadow-lift)] max-h-[85vh] flex flex-col animate-wobble-in">
-            <WashiTape
-              color={activeEntry.tape}
-              rotate={-3}
-              width="6rem"
-              className="absolute -top-3 left-10 pointer-events-none"
-            />
-            <button
-              onClick={() => setActiveEntry(null)}
-              className="absolute top-4 right-4 h-8 w-8 grid place-items-center rounded-full border-2 border-ink bg-paper text-ink hover:bg-accent cursor-pointer transition-colors font-hand text-xl z-20"
-            >
-              ✕
-            </button>
+      <MemoryDetailPanel
+        activeEntry={activeEntry}
+        setActiveEntry={setActiveEntry}
+        setImagePreview={setImagePreview}
+      />
 
-            {/* Joint Scrollable Container for all content */}
-            <div className="flex-1 overflow-y-auto subtle-scroll pr-2 space-y-6 mt-2">
-              {/* Header Info */}
-              <div className="flex items-start gap-4">
-                <span className="text-4xl leading-none shrink-0">
-                  {activeEntry.mood}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-display text-2xl md:text-3xl text-ink font-bold leading-tight">
-                    {activeEntry.title}
-                  </h3>
-                  <p className="font-accent text-xs md:text-sm uppercase tracking-wider text-ink-soft mt-1.5 flex items-center gap-1.5 flex-wrap">
-                    <span>{activeEntry.collection || "Unsorted"}</span>
-                    <span>·</span>
-                    <span className="font-hand text-xl lowercase">
-                      {new Date(activeEntry.date + "T00:00").toLocaleDateString(
-                        undefined,
-                        { month: "short", day: "numeric" },
-                      )}{" "}
-                      ({activeEntry.date})
-                    </span>
-                    {activeEntry.place && (
-                      <>
-                        <span>·</span>
-                        <span className="flex items-center gap-0.5">
-                          <MapPin className="h-3.5 w-3.5" /> {activeEntry.place}
-                        </span>
-                      </>
-                    )}
-                  </p>
-                </div>
-              </div>
-
-              {/* Photos */}
-              {activeEntry.photos && activeEntry.photos.length > 0 && (
-                <Collage
-                  photos={activeEntry.photos}
-                  onPhotoClick={(idx) =>
-                    setImagePreview({
-                      src: activeEntry.photos![idx],
-                      title: activeEntry.title,
-                    })
-                  }
-                />
-              )}
-
-              {/* Description */}
-              <div>
-                <p className="font-body text-ink-soft text-lg leading-relaxed whitespace-pre-wrap">
-                  {activeEntry.note}
-                </p>
-              </div>
-
-              {/* Tags */}
-              {activeEntry.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {activeEntry.tags.map((t) => (
-                    <span
-                      key={t}
-                      className="font-hand text-lg text-ink bg-accent/70 px-3.5 py-1 rounded-full border border-ink/40 shadow-xs"
-                    >
-                      #{t}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {imagePreview && (
-        <div className="fixed inset-0 z-[140] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
-          <button
-            type="button"
-            onClick={() => setImagePreview(null)}
-            className="absolute inset-0 cursor-zoom-out"
-            aria-label="Close enlarged image"
-          />
-          <div className="relative max-h-[90vh] w-full max-w-5xl">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="truncate font-display text-2xl text-paper">
-                {imagePreview.title}
-              </p>
-              <div className="flex shrink-0 items-center gap-2">
-                <a
-                  href={imagePreview.src}
-                  download={`${imagePreview.title || "momentstash-image"}.jpg`}
-                  className="inline-flex h-10 items-center gap-2 rounded-full border-2 border-paper bg-paper px-4 font-hand text-lg text-ink shadow-[2px_2px_0_var(--color-ink)]"
-                >
-                  <Download className="h-4 w-4" /> Download
-                </a>
-                <button
-                  type="button"
-                  onClick={() => setImagePreview(null)}
-                  className="grid h-10 w-10 place-items-center rounded-full border-2 border-paper bg-paper font-hand text-xl text-ink"
-                  aria-label="Close enlarged image"
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-            <img
-              src={imagePreview.src}
-              alt=""
-              className="mx-auto max-h-[calc(90vh-4rem)] max-w-full rounded-2xl border-2 border-paper object-contain shadow-[var(--shadow-lift)]"
-            />
-          </div>
-        </div>
-      )}
+      <ImagePreviewPanel
+        imagePreview={imagePreview}
+        setImagePreview={setImagePreview}
+      />
 
       {/* Floating Scrapbook Custom Context Menu */}
-      {contextMenu && (
-        <div
-          className="fixed z-[110] bg-paper border-2 border-ink p-2 rounded-xl shadow-[var(--shadow-paper)] flex flex-col min-w-[170px] animate-fade-in"
-          style={{
-            top: menuY,
-            left: menuX,
-          }}
-          onContextMenu={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <WashiTape
-            color="yellow"
-            rotate={-2}
-            width="3rem"
-            className="absolute -top-2.5 left-4 pointer-events-none"
-          />
-          {contextMenu.type === "shelf" ? (
-            <button
-              onClick={() => {
-                handleDeleteShelf(contextMenu.targetId);
-                setContextMenu(null);
-              }}
-              className="text-left font-hand text-lg hover:bg-accent/40 text-red-600 hover:text-red-700 px-3 py-1.5 rounded-lg transition-colors cursor-pointer w-full"
-            >
-              🗑 Delete Shelf
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={() => {
-                  window.location.href = `/create?edit=${contextMenu.targetId}`;
-                  setContextMenu(null);
-                }}
-                className="text-left font-hand text-lg hover:bg-accent/40 text-ink px-3 py-1.5 rounded-lg transition-colors cursor-pointer w-full flex items-center gap-1.5"
-              >
-                <span>✏️</span> Edit Fold
-              </button>
-              <button
-                onClick={() => {
-                  handleRemoveEntryFromShelf(contextMenu.targetId);
-                  setContextMenu(null);
-                }}
-                className="text-left font-hand text-lg hover:bg-accent/40 text-ink px-3 py-1.5 rounded-lg transition-colors cursor-pointer w-full flex items-center gap-1.5"
-              >
-                📁 Remove from Shelf
-              </button>
-              <button
-                onClick={() => {
-                  handleDeleteEntry(contextMenu.targetId);
-                  setContextMenu(null);
-                }}
-                className="text-left font-hand text-lg hover:bg-accent/40 text-red-600 hover:text-red-700 px-3 py-1.5 rounded-lg transition-colors cursor-pointer w-full flex items-center gap-1.5"
-              >
-                🗑 Delete Note
-              </button>
-            </>
-          )}
-        </div>
-      )}
+      <ContextMenuPanel
+        contextMenu={contextMenu}
+        setContextMenu={setContextMenu}
+        menuY={menuY}
+        menuX={menuX}
+        handleDeleteShelf={handleDeleteShelf}
+        handleRemoveEntryFromShelf={handleRemoveEntryFromShelf}
+        handleDeleteEntry={handleDeleteEntry}
+      />
 
       {/* ── Custom Scrapbook Dialog ── */}
-      {dialog && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 animate-fade-in">
-          <div
-            onClick={() => setDialog(null)}
-            className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
-          />
-          <div className="relative w-full max-w-md paper-card rounded-[24px] border-2 border-ink p-6 md:p-8 shadow-[var(--shadow-lift)] bg-paper animate-wobble-in flex flex-col z-50">
-            <WashiTape
-              color="pink"
-              rotate={-2}
-              width="5rem"
-              className="absolute -top-3.5 left-12 pointer-events-none"
-            />
-
-            <h4 className="font-display text-2xl text-ink font-bold mb-3">
-              {dialog.title}
-            </h4>
-            <p className="font-hand text-xl text-ink-soft mb-5 leading-relaxed">
-              {dialog.message}
-            </p>
-
-            {dialog.kind === "prompt" && (
-              <input
-                autoFocus
-                value={promptValue}
-                onChange={(e) => setPromptValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && promptValue.trim()) {
-                    dialog.onSubmit(promptValue);
-                  }
-                }}
-                placeholder={dialog.placeholder}
-                className="w-full mb-5 border-b-2 border-dashed border-ink/40 bg-transparent py-2 px-1 font-hand text-2xl text-ink outline-none focus:border-primary transition-colors placeholder:text-ink-soft/50"
-              />
-            )}
-
-            <div className="flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setDialog(null)}
-                className="font-hand text-lg border-2 border-ink/40 px-5 py-1.5 rounded-full bg-paper text-ink-soft hover:bg-accent/30 cursor-pointer transition-all"
-              >
-                Cancel
-              </button>
-              {dialog.kind === "confirm" && (
-                <button
-                  type="button"
-                  onClick={dialog.onConfirm}
-                  className="font-hand text-lg border-2 border-ink px-6 py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/80 cursor-pointer shadow-[2px_2px_0_var(--color-ink)] active:translate-y-0.5 transition-all font-bold"
-                >
-                  Yes, do it
-                </button>
-              )}
-              {dialog.kind === "prompt" && (
-                <button
-                  type="button"
-                  onClick={() => dialog.onSubmit(promptValue)}
-                  className="font-hand text-lg border-2 border-ink px-6 py-1.5 rounded-full bg-accent text-ink hover:bg-accent/80 cursor-pointer shadow-[2px_2px_0_var(--color-ink)] active:translate-y-0.5 transition-all font-bold"
-                >
-                  Create ✿
-                </button>
-              )}
-              {dialog.kind === "alert" && (
-                <button
-                  type="button"
-                  onClick={() => setDialog(null)}
-                  className="font-hand text-lg border-2 border-ink px-6 py-1.5 rounded-full bg-accent text-ink hover:bg-accent/80 cursor-pointer shadow-[2px_2px_0_var(--color-ink)] active:translate-y-0.5 transition-all font-bold"
-                >
-                  Okay ✿
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <ScrapbookDialogModal
+        dialog={dialog}
+        setDialog={setDialog}
+        promptValue={promptValue}
+        setPromptValue={setPromptValue}
+      />
     </main>
   );
 }
@@ -1283,4 +693,798 @@ function buildMonthCells(monthStart: Date): (Date | null)[] {
   for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, month, d));
   while (cells.length % 7 !== 0) cells.push(null);
   return cells;
+}
+
+function CollectionsList({
+  collections,
+  handleCreateShelf,
+  hoveredShelf,
+  setHoveredShelf,
+  openCollection,
+  setOpenCollection,
+  setContextMenu,
+}: {
+  collections: [string, Entry[]][];
+  handleCreateShelf: () => void;
+  hoveredShelf: string | null;
+  setHoveredShelf: (name: string | null) => void;
+  openCollection: string | null;
+  setOpenCollection: (
+    val: string | null | ((cur: string | null) => string | null),
+  ) => void;
+  setContextMenu: (
+    menu: {
+      x: number;
+      y: number;
+      type: "shelf" | "note";
+      targetId: string;
+    } | null,
+  ) => void;
+}) {
+  return (
+    <div className="p-6 md:p-8 relative min-h-[450px] lg:min-h-0 lg:h-full border-b lg:border-b-0 lg:border-r border-ink/30 flex flex-col justify-between overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col justify-start">
+        <div className="flex items-center justify-between mb-6 shrink-0">
+          <h2 className="font-display text-2xl text-ink flex items-center gap-2">
+            <FolderHeart className="h-5 w-5 text-primary" /> My Shelves
+          </h2>
+          <button
+            onClick={handleCreateShelf}
+            className="font-hand text-lg border-2 border-ink px-3.5 py-1 rounded-full bg-accent hover:bg-accent/80 text-ink shadow-[2px_2px_0_var(--color-ink)] active:translate-y-0.5 transition-all cursor-pointer font-bold"
+          >
+            + New Shelf
+          </button>
+        </div>
+
+        {collections.length === 0 ? (
+          <p className="font-hand text-2xl text-ink-soft text-center mt-10">
+            no shelves yet — fold a moment first ✿
+          </p>
+        ) : (
+          <div className="-m-4 grid grid-cols-1 gap-6 overflow-visible p-4 pt-10 pb-6 sm:grid-cols-2 lg:min-h-0 lg:flex-1 lg:overflow-y-auto subtle-scroll">
+            {collections.map(([name, items], idx) => {
+              const tape = tapeFor[idx % tapeFor.length];
+              const cover = items.find((e) => e.photos && e.photos.length > 0);
+              const rotate = (idx % 2 === 0 ? -1 : 1) * (1 + (idx % 3) * 0.4);
+              const isHovered = hoveredShelf === name;
+              return (
+                <button
+                  key={name}
+                  onMouseEnter={() => setHoveredShelf(name)}
+                  onMouseLeave={() => setHoveredShelf(null)}
+                  onClick={() =>
+                    setOpenCollection((cur) => (cur === name ? null : name))
+                  }
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    setContextMenu({
+                      x: e.clientX,
+                      y: e.clientY,
+                      type: "shelf",
+                      targetId: name,
+                    });
+                  }}
+                  className={[
+                    "text-left relative paper-card rounded-xl border-2 p-4 transition-all cursor-pointer h-fit",
+                    openCollection === name
+                      ? "border-primary bg-primary-soft/10 shadow-[var(--shadow-paper)] z-10"
+                      : isHovered
+                        ? "border-ink/80 bg-accent/20 shadow-[var(--shadow-paper)] z-10"
+                        : "border-ink/80 z-0",
+                  ].join(" ")}
+                  style={{
+                    transform: `rotate(${rotate}deg) ${isHovered ? "scale(1.04) translateY(-5px)" : "scale(1) translateY(0)"}`,
+                    transition:
+                      "transform 0.2s ease, border-width 0.1s ease, box-shadow 0.2s ease",
+                  }}
+                >
+                  <WashiTape
+                    color={tape}
+                    rotate={-6}
+                    width="4rem"
+                    className="absolute -top-2 left-6"
+                  />
+                  {cover?.photos && cover.photos.length > 0 ? (
+                    <img
+                      src={cover.photos[0]}
+                      alt=""
+                      className="w-full h-24 object-cover rounded-lg border border-ink/40"
+                    />
+                  ) : (
+                    <div className="w-full h-24 rounded-lg border border-ink/40 bg-paper-deep/60 grid place-items-center">
+                      <span className="text-4xl">{items[0]?.mood ?? "✿"}</span>
+                    </div>
+                  )}
+                  <div className="flex items-end justify-between mt-2.5">
+                    <div className="min-w-0">
+                      <h3 className="font-display text-lg text-ink leading-tight truncate">
+                        {name}
+                      </h3>
+                      <p className="font-hand text-base text-ink-soft">
+                        {items.length} {items.length === 1 ? "fold" : "folds"}
+                      </p>
+                    </div>
+                    <HeartDoodle className="h-4 w-4 text-primary opacity-60 shrink-0" />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Left Page Bottom / Organic Tape style spacer */}
+      <div className="mt-8 border-t border-dashed border-ink/20 pt-4 flex items-center justify-between text-xs text-ink-soft uppercase font-accent tracking-widest shrink-0">
+        <span>MomentStash © 2026</span>
+        <span>Keep details close</span>
+      </div>
+    </div>
+  );
+}
+
+function CalendarView({
+  month,
+  setMonth,
+  datesWithEntries,
+  selectedDate,
+  setSelectedDate,
+}: {
+  month: Date;
+  setMonth: (d: Date) => void;
+  datesWithEntries: Set<string>;
+  selectedDate: string | null;
+  setSelectedDate: (date: string | null) => void;
+}) {
+  return (
+    <div className="p-6 md:p-8 relative min-h-[450px] lg:min-h-0 lg:h-full flex flex-col justify-between overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col justify-start">
+        <div className="flex items-center justify-between gap-4 mb-6 flex-wrap shrink-0">
+          <h2 className="font-display text-2xl text-ink flex items-center gap-2">
+            <CalendarIcon className="h-5 w-5 text-primary" /> Calendar
+          </h2>
+          <div className="flex items-center gap-2">
+            <CalNavBtn
+              onClick={() => setMonth(addMonths(month, -1))}
+              dir="left"
+            />
+            <span className="font-hand text-xl text-ink min-w-[8rem] text-center font-bold">
+              {month.toLocaleDateString(undefined, {
+                month: "long",
+                year: "numeric",
+              })}
+            </span>
+            <CalNavBtn
+              onClick={() => setMonth(addMonths(month, 1))}
+              dir="right"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-7 gap-1.5 mb-2 shrink-0">
+          {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
+            <div
+              key={i}
+              className="text-center font-accent text-xs font-bold uppercase tracking-widest text-ink-soft"
+            >
+              {d}
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7 gap-1.5 overflow-visible pr-1 lg:min-h-0 lg:flex-1 lg:overflow-y-auto subtle-scroll">
+          {buildMonthCells(month).map((cell, i) => {
+            if (!cell) return <div key={i} />;
+            const iso = isoDate(cell);
+            const has = datesWithEntries.has(iso);
+            const isSelected = selectedDate === iso;
+            const isToday = iso === isoDate(new Date());
+            return (
+              <button
+                key={i}
+                onClick={() => setSelectedDate(isSelected ? null : iso)}
+                className={[
+                  "aspect-square rounded-xl border-2 flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer relative h-fit",
+                  isSelected
+                    ? "bg-primary text-primary-foreground border-ink shadow-[2px_2px_0_var(--color-ink)]"
+                    : isToday
+                      ? "bg-accent border-ink text-accent-foreground"
+                      : "border-ink/40 bg-paper/40 hover:border-ink",
+                ].join(" ")}
+              >
+                <span className="font-accent text-xs font-bold leading-none">
+                  {cell.getDate()}
+                </span>
+                {has && (
+                  <span
+                    className={[
+                      "h-1.5 w-1.5 rounded-full absolute bottom-1",
+                      isSelected ? "bg-primary-foreground" : "bg-primary",
+                    ].join(" ")}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Doodles at the very bottom right of the page */}
+      <div className="mt-8 pt-4 flex justify-between items-end relative pointer-events-none shrink-0">
+        <div className="flex items-end shrink-0 z-0">
+          <PlantDoodle1 />
+          <PlantDoodle2 />
+        </div>
+        <div className="shrink-0 z-0 pr-2 pb-1">
+          <CoffeeDoodle />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ExpandedShelfPanel({
+  openCollection,
+  setOpenCollection,
+  entries,
+  setActiveEntry,
+  setContextMenu,
+}: {
+  openCollection: string | null;
+  setOpenCollection: (val: string | null) => void;
+  entries: Entry[];
+  setActiveEntry: (e: Entry | null) => void;
+  setContextMenu: (
+    menu: {
+      x: number;
+      y: number;
+      type: "shelf" | "note";
+      targetId: string;
+    } | null,
+  ) => void;
+}) {
+  if (!openCollection) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        onClick={() => setOpenCollection(null)}
+        className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity animate-fade-in"
+      />
+      <div className="relative w-full max-w-4xl paper-card rounded-[32px] border-2 border-ink p-6 md:p-8 shadow-[var(--shadow-lift)] max-h-[85vh] flex flex-col animate-wobble-in">
+        <WashiTape
+          color="lavender"
+          rotate={-3}
+          width="6rem"
+          className="absolute -top-3 left-12"
+        />
+        <button
+          onClick={() => setOpenCollection(null)}
+          className="absolute top-4 right-4 h-8 w-8 grid place-items-center rounded-full border-2 border-ink bg-paper text-ink hover:bg-accent cursor-pointer transition-colors font-hand text-xl z-10"
+        >
+          ✕
+        </button>
+        <div className="flex items-center gap-3 mb-4 pr-8 shrink-0">
+          <h3 className="font-display text-3xl text-ink font-bold leading-none truncate">
+            {openCollection}
+          </h3>
+          <ArrowSquiggle className="h-5 w-12 text-secondary shrink-0" />
+        </div>
+
+        <div className="flex-1 overflow-y-auto subtle-scroll pr-1 mt-4 pt-2 px-1 -mx-1">
+          {entries.filter((e) => e.collection === openCollection).length ===
+          0 ? (
+            <p className="font-hand text-2xl text-ink-soft text-center py-12">
+              this shelf is empty ✿
+            </p>
+          ) : (
+            <ul className="grid gap-6 sm:grid-cols-2 pb-12">
+              {entries
+                .filter((e) => e.collection === openCollection)
+                .map((e) => (
+                  <li
+                    key={e.id}
+                    onClick={(evt) => {
+                      evt.stopPropagation();
+                      setActiveEntry(e);
+                    }}
+                    onContextMenu={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      setContextMenu({
+                        x: event.clientX,
+                        y: event.clientY,
+                        type: "note",
+                        targetId: e.id,
+                      });
+                    }}
+                    className="rounded-2xl border-2 border-ink/60 bg-paper p-5 shadow-sm hover:shadow-[var(--shadow-paper)] hover:bg-accent/10 transition-all duration-200 relative cursor-pointer"
+                  >
+                    <WashiTape
+                      color={e.tape}
+                      rotate={2}
+                      width="3.5rem"
+                      className="absolute -top-2.5 right-6"
+                    />
+                    {e.photos && e.photos.length > 0 && (
+                      <div className="mb-4">
+                        <Collage photos={e.photos} />
+                      </div>
+                    )}
+                    <div className="flex items-start gap-3">
+                      <span className="text-3xl leading-none shrink-0">
+                        {e.mood}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="font-display text-xl text-ink font-bold leading-tight truncate">
+                          {e.title}
+                        </p>
+                        <p className="font-hand text-lg text-ink-soft leading-none mt-1">
+                          {e.date}
+                          {e.place && (
+                            <>
+                              {" · "}
+                              <MapPin className="inline h-3.5 w-3.5 -mt-0.5 text-primary" />{" "}
+                              {e.place}
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="font-body text-sm text-ink-soft mt-3.5 leading-relaxed">
+                      {e.note.length > 120
+                        ? e.note.slice(0, 120) + "…"
+                        : e.note}
+                    </p>
+                  </li>
+                ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SelectedDatePanel({
+  selectedDate,
+  setSelectedDate,
+  selectedEntries,
+  setActiveEntry,
+  setContextMenu,
+}: {
+  selectedDate: string | null;
+  setSelectedDate: (date: string | null) => void;
+  selectedEntries: Entry[];
+  setActiveEntry: (e: Entry | null) => void;
+  setContextMenu: (
+    menu: {
+      x: number;
+      y: number;
+      type: "shelf" | "note";
+      targetId: string;
+    } | null,
+  ) => void;
+}) {
+  if (!selectedDate) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        onClick={() => setSelectedDate(null)}
+        className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity animate-fade-in"
+      />
+      <div className="relative w-full max-w-3xl paper-card rounded-[32px] border-2 border-ink p-6 md:p-8 shadow-[var(--shadow-lift)] max-h-[85vh] flex flex-col animate-wobble-in">
+        <WashiTape
+          color="yellow"
+          rotate={4}
+          width="5rem"
+          className="absolute -top-3 right-12"
+        />
+        <button
+          onClick={() => setSelectedDate(null)}
+          className="absolute top-4 right-4 h-8 w-8 grid place-items-center rounded-full border-2 border-ink bg-paper text-ink hover:bg-accent cursor-pointer transition-colors font-hand text-xl z-10"
+        >
+          ✕
+        </button>
+        <div className="border-b-2 border-dashed border-ink/30 pb-3 mb-4 pr-8 shrink-0">
+          <p className="font-hand text-3xl text-ink font-bold leading-none">
+            {new Date(selectedDate + "T00:00").toLocaleDateString(undefined, {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+            })}
+          </p>
+        </div>
+
+        <div className="flex-1 overflow-y-auto subtle-scroll pr-1 mt-2 pt-2 px-1 -mx-1">
+          {selectedEntries.length === 0 ? (
+            <p className="font-hand text-2xl text-ink-soft text-center py-6">
+              no folds for this day — perhaps a quiet one ✿
+            </p>
+          ) : (
+            <ul className="grid gap-6 sm:grid-cols-2">
+              {selectedEntries.map((e) => (
+                <li
+                  key={e.id}
+                  onClick={() => {
+                    setSelectedDate(null);
+                    setActiveEntry(e);
+                  }}
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setContextMenu({
+                      x: event.clientX,
+                      y: event.clientY,
+                      type: "note",
+                      targetId: e.id,
+                    });
+                  }}
+                  className="flex items-start gap-4 rounded-xl border border-ink/40 bg-paper-deep/35 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
+                >
+                  {e.photos && e.photos.length > 0 && (
+                    <div className="shrink-0 h-16 w-16 md:h-20 md:w-20 rounded-lg overflow-hidden border border-ink/30">
+                      <img
+                        src={e.photos[0]}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <span className="text-3xl leading-none shrink-0 mt-1">
+                    {e.mood}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-display text-lg text-ink font-bold leading-tight">
+                      {e.title}
+                    </p>
+                    <p className="font-hand text-base text-ink-soft leading-none mt-1">
+                      {e.collection || "Unsorted"}
+                    </p>
+                    <p className="font-body text-sm text-ink-soft mt-3.5 leading-relaxed">
+                      {e.note.length > 120
+                        ? e.note.slice(0, 120) + "…"
+                        : e.note}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MemoryDetailPanel({
+  activeEntry,
+  setActiveEntry,
+  setImagePreview,
+}: {
+  activeEntry: Entry | null;
+  setActiveEntry: (e: Entry | null) => void;
+  setImagePreview: (preview: { src: string; title: string } | null) => void;
+}) {
+  if (!activeEntry) return null;
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
+      <div
+        onClick={() => setActiveEntry(null)}
+        className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity"
+      />
+      <div className="relative w-full max-w-2xl paper-card rounded-[32px] border-2 border-ink p-6 md:p-8 shadow-[var(--shadow-lift)] max-h-[85vh] flex flex-col animate-wobble-in">
+        <WashiTape
+          color={activeEntry.tape}
+          rotate={-3}
+          width="6rem"
+          className="absolute -top-3 left-10 pointer-events-none"
+        />
+        <button
+          onClick={() => setActiveEntry(null)}
+          className="absolute top-4 right-4 h-8 w-8 grid place-items-center rounded-full border-2 border-ink bg-paper text-ink hover:bg-accent cursor-pointer transition-colors font-hand text-xl z-20"
+        >
+          ✕
+        </button>
+
+        {/* Joint Scrollable Container for all content */}
+        <div className="flex-1 overflow-y-auto subtle-scroll pr-2 space-y-6 mt-2">
+          {/* Header Info */}
+          <div className="flex items-start gap-4">
+            <span className="text-4xl leading-none shrink-0">
+              {activeEntry.mood}
+            </span>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-display text-2xl md:text-3xl text-ink font-bold leading-tight">
+                {activeEntry.title}
+              </h3>
+              <p className="font-accent text-xs md:text-sm uppercase tracking-wider text-ink-soft mt-1.5 flex items-center gap-1.5 flex-wrap">
+                <span>{activeEntry.collection || "Unsorted"}</span>
+                <span>·</span>
+                <span className="font-hand text-xl lowercase">
+                  {new Date(activeEntry.date + "T00:00").toLocaleDateString(
+                    undefined,
+                    { month: "short", day: "numeric" },
+                  )}{" "}
+                  ({activeEntry.date})
+                </span>
+                {activeEntry.place && (
+                  <>
+                    <span>·</span>
+                    <span className="flex items-center gap-0.5">
+                      <MapPin className="h-3.5 w-3.5" /> {activeEntry.place}
+                    </span>
+                  </>
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* Photos */}
+          {activeEntry.photos && activeEntry.photos.length > 0 && (
+            <Collage
+              photos={activeEntry.photos}
+              onPhotoClick={(idx) =>
+                setImagePreview({
+                  src: activeEntry.photos![idx],
+                  title: activeEntry.title,
+                })
+              }
+            />
+          )}
+
+          {/* Description */}
+          <div>
+            <p className="font-body text-ink-soft text-lg leading-relaxed whitespace-pre-wrap">
+              {activeEntry.note}
+            </p>
+          </div>
+
+          {/* Tags */}
+          {activeEntry.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-2">
+              {activeEntry.tags.map((t) => (
+                <span
+                  key={t}
+                  className="font-hand text-lg text-ink bg-accent/70 px-3.5 py-1 rounded-full border border-ink/40 shadow-xs"
+                >
+                  #{t}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ImagePreviewPanel({
+  imagePreview,
+  setImagePreview,
+}: {
+  imagePreview: { src: string; title: string } | null;
+  setImagePreview: (preview: { src: string; title: string } | null) => void;
+}) {
+  if (!imagePreview) return null;
+  return (
+    <div className="fixed inset-0 z-[140] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
+      <button
+        type="button"
+        onClick={() => setImagePreview(null)}
+        className="absolute inset-0 cursor-zoom-out"
+        aria-label="Close enlarged image"
+      />
+      <div className="relative max-h-[90vh] w-full max-w-5xl">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <p className="truncate font-display text-2xl text-paper">
+            {imagePreview.title}
+          </p>
+          <div className="flex shrink-0 items-center gap-2">
+            <a
+              href={imagePreview.src}
+              download={`${imagePreview.title || "momentstash-image"}.jpg`}
+              className="inline-flex h-10 items-center gap-2 rounded-full border-2 border-paper bg-paper px-4 font-hand text-lg text-ink shadow-[2px_2px_0_var(--color-ink)]"
+            >
+              <Download className="h-4 w-4" /> Download
+            </a>
+            <button
+              type="button"
+              onClick={() => setImagePreview(null)}
+              className="grid h-10 w-10 place-items-center rounded-full border-2 border-paper bg-paper font-hand text-xl text-ink"
+              aria-label="Close enlarged image"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+        <img
+          src={imagePreview.src}
+          alt=""
+          className="mx-auto max-h-[calc(90vh-4rem)] max-w-full rounded-2xl border-2 border-paper object-contain shadow-[var(--shadow-lift)]"
+        />
+      </div>
+    </div>
+  );
+}
+
+function ContextMenuPanel({
+  contextMenu,
+  setContextMenu,
+  menuY,
+  menuX,
+  handleDeleteShelf,
+  handleRemoveEntryFromShelf,
+  handleDeleteEntry,
+}: {
+  contextMenu: {
+    x: number;
+    y: number;
+    type: "shelf" | "note";
+    targetId: string;
+  } | null;
+  setContextMenu: (
+    menu: {
+      x: number;
+      y: number;
+      type: "shelf" | "note";
+      targetId: string;
+    } | null,
+  ) => void;
+  menuY: number;
+  menuX: number;
+  handleDeleteShelf: (id: string) => void;
+  handleRemoveEntryFromShelf: (id: string) => void;
+  handleDeleteEntry: (id: string) => void;
+}) {
+  if (!contextMenu) return null;
+  return (
+    <div
+      className="fixed z-[110] bg-paper border-2 border-ink p-2 rounded-xl shadow-[var(--shadow-paper)] flex flex-col min-w-[170px] animate-fade-in"
+      style={{
+        top: menuY,
+        left: menuX,
+      }}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <WashiTape
+        color="yellow"
+        rotate={-2}
+        width="3rem"
+        className="absolute -top-2.5 left-4 pointer-events-none"
+      />
+      {contextMenu.type === "shelf" ? (
+        <button
+          onClick={() => {
+            handleDeleteShelf(contextMenu.targetId);
+            setContextMenu(null);
+          }}
+          className="text-left font-hand text-lg hover:bg-accent/40 text-red-600 hover:text-red-700 px-3 py-1.5 rounded-lg transition-colors cursor-pointer w-full"
+        >
+          🗑 Delete Shelf
+        </button>
+      ) : (
+        <>
+          <button
+            onClick={() => {
+              window.location.href = `/create?edit=${contextMenu.targetId}`;
+              setContextMenu(null);
+            }}
+            className="text-left font-hand text-lg hover:bg-accent/40 text-ink px-3 py-1.5 rounded-lg transition-colors cursor-pointer w-full flex items-center gap-1.5"
+          >
+            <span>✏️</span> Edit Fold
+          </button>
+          <button
+            onClick={() => {
+              handleRemoveEntryFromShelf(contextMenu.targetId);
+              setContextMenu(null);
+            }}
+            className="text-left font-hand text-lg hover:bg-accent/40 text-ink px-3 py-1.5 rounded-lg transition-colors cursor-pointer w-full flex items-center gap-1.5"
+          >
+            📁 Remove from Shelf
+          </button>
+          <button
+            onClick={() => {
+              handleDeleteEntry(contextMenu.targetId);
+              setContextMenu(null);
+            }}
+            className="text-left font-hand text-lg hover:bg-accent/40 text-red-600 hover:text-red-700 px-3 py-1.5 rounded-lg transition-colors cursor-pointer w-full flex items-center gap-1.5"
+          >
+            🗑 Delete Note
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+function ScrapbookDialogModal({
+  dialog,
+  setDialog,
+  promptValue,
+  setPromptValue,
+}: {
+  dialog: ScrapbookDialog | null;
+  setDialog: (dialog: ScrapbookDialog | null) => void;
+  promptValue: string;
+  setPromptValue: (val: string) => void;
+}) {
+  if (!dialog) return null;
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 animate-fade-in">
+      <div
+        onClick={() => setDialog(null)}
+        className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
+      />
+      <div className="relative w-full max-w-md paper-card rounded-[24px] border-2 border-ink p-6 md:p-8 shadow-[var(--shadow-lift)] bg-paper animate-wobble-in flex flex-col z-50">
+        <WashiTape
+          color="pink"
+          rotate={-2}
+          width="5rem"
+          className="absolute -top-3.5 left-12 pointer-events-none"
+        />
+
+        <h4 className="font-display text-2xl text-ink font-bold mb-3">
+          {dialog.title}
+        </h4>
+        <p className="font-hand text-xl text-ink-soft mb-5 leading-relaxed">
+          {dialog.message}
+        </p>
+
+        {dialog.kind === "prompt" && (
+          <input
+            autoFocus
+            value={promptValue}
+            onChange={(e) => setPromptValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && promptValue.trim()) {
+                dialog.onSubmit(promptValue);
+              }
+            }}
+            placeholder={dialog.placeholder}
+            className="w-full mb-5 border-b-2 border-dashed border-ink/40 bg-transparent py-2 px-1 font-hand text-2xl text-ink outline-none focus:border-primary transition-colors placeholder:text-ink-soft/50"
+          />
+        )}
+
+        <div className="flex items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => setDialog(null)}
+            className="font-hand text-lg border-2 border-ink/40 px-5 py-1.5 rounded-full bg-paper text-ink-soft hover:bg-accent/30 cursor-pointer transition-all"
+          >
+            Cancel
+          </button>
+          {dialog.kind === "confirm" && (
+            <button
+              type="button"
+              onClick={dialog.onConfirm}
+              className="font-hand text-lg border-2 border-ink px-6 py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/80 cursor-pointer shadow-[2px_2px_0_var(--color-ink)] active:translate-y-0.5 transition-all font-bold"
+            >
+              Yes, do it
+            </button>
+          )}
+          {dialog.kind === "prompt" && (
+            <button
+              type="button"
+              onClick={() => dialog.onSubmit(promptValue)}
+              className="font-hand text-lg border-2 border-ink px-6 py-1.5 rounded-full bg-accent text-ink hover:bg-accent/80 cursor-pointer shadow-[2px_2px_0_var(--color-ink)] active:translate-y-0.5 transition-all font-bold"
+            >
+              Create ✿
+            </button>
+          )}
+          {dialog.kind === "alert" && (
+            <button
+              type="button"
+              onClick={() => setDialog(null)}
+              className="font-hand text-lg border-2 border-ink px-6 py-1.5 rounded-full bg-accent text-ink hover:bg-accent/80 cursor-pointer shadow-[2px_2px_0_var(--color-ink)] active:translate-y-0.5 transition-all font-bold"
+            >
+              Okay ✿
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
